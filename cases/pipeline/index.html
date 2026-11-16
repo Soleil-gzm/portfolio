@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>对话数据清洗与语义增强流水线 | Portfolio</title>
+  <meta name="description" content="五步流水线：切分、分桶、清洗、定稿、增强。可插拔增强器与分析器、断点续跑、ASR 噪声模拟。私有项目，仅展示架构与设计取舍。">
+  <meta name="theme-color" content="#f7f5f0">
+  <link rel="stylesheet" href="../../assets/css/site.css">
+  <script src="../../assets/js/site.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+
+  <header class="site-header">
+    <div class="wrap-wide">
+      <a class="brand" href="../../index.html">
+        <span class="brand-mark" aria-hidden="true">GZ</span>
+        <span>LLM Agent · Data Quality</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="../../index.html">首页</a>
+        <a href="../agent/index.html">Agent</a>
+        <a href="../generator/index.html">生成引擎</a>
+        <a href="index.html">数据管线</a>
+        <a class="optional" href="../../notes/asr-error-modeling.html">补充</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap">
+      <nav class="breadcrumb" aria-label="面包屑">
+        <a href="../../index.html">首页</a>
+        <span aria-hidden="true">/</span>
+        <span>对话数据清洗与语义增强流水线</span>
+      </nav>
+
+      <header class="case-hero">
+        <p class="eyebrow">Case 03 · Pipeline</p>
+        <h1>对话数据清洗与语义增强流水线</h1>
+        <p class="lede">
+          把原始对话变成可训练、可复现、可扩展的批次。
+          五个步骤固定生命周期，增强器与分析器按配置插拔，
+          每一步都能单独重跑。
+        </p>
+        <div class="case-meta">
+          <span>Private</span>
+          <span>Architecture only</span>
+          <span>Python</span>
+          <span>Pipeline</span>
+        </div>
+      </header>
+
+      <div class="stats" aria-label="关键事实">
+        <div class="stat">
+          <div class="stat-value">5</div>
+          <div class="stat-label">固定步骤：切分 → 分桶 → 清洗 → 定稿 → 增强</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">8</div>
+          <div class="stat-label">增强器：6 类词法 + 语序 + ASR 噪声</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">72</div>
+          <div class="stat-label">流水线测试通过</div>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <span class="callout-title">公开展示边界</span>
+        项目代码、配置与任何业务数据均不公开。本页只描述<strong>已实现的架构、设计取舍与可验证的工程事实</strong>，
+        不含业务规则、真实对话或生产指标。
+      </div>
+
+      <h2>问题</h2>
+      <p>
+        原始对话数据格式不统一，且不同训练目标需要的切片、条数和噪声分布都不一样。
+        如果写成一次性脚本，会遇到三个问题：
+      </p>
+      <ul>
+        <li><strong>断点不可恢复</strong>：跑到第 4 步失败，前 3 步的产物无法判定是否可信。</li>
+        <li><strong>增强逻辑与主流程耦合</strong>：想换一种增强方式，就要改主脚本。</li>
+        <li><strong>结果不可解释</strong>：只看到条数变化，说不清每一步过滤掉了什么。</li>
+      </ul>
+      <p>
+        因此把流程拆成固定五步，每步有统一的 <code>pre_run → run → post_run</code> 生命周期，
+        增强器和分析器通过注册表接入，产物与完成标记都落在任务目录。
+      </p>
+
+      <h2>架构</h2>
+      <figure class="figure">
+        <img src="../../assets/img/pipeline-architecture.svg" alt="输入经切分、分桶、清洗、定稿、增强五步输出原始与增强变体；增强器、核心组件、分析器与插件分层接入。" loading="lazy">
+        <figcaption>五步主链路，以及增强器、分析器、插件三类扩展点。</figcaption>
+      </figure>
+      <p>
+        主链路是：<code>01_split</code> 按会话切分 → <code>02_bucket</code> 分桶 →
+        <code>03_clean</code> 规则清洗 → <code>04_finalize</code> 定稿 →
+        <code>05_augment</code> 生成增强变体。每步完成后写入完成标记，
+        <code>resume: true</code> 时跳过已完成步骤。
+      </p>
+
+      <h2>关键决策</h2>
+      <div class="decisions">
+        <article class="decision">
+          <h3>把 God Object 拆成三个组件</h3>
+          <p>
+            原先的 <code>PipelineContext</code> 同时管配置、路径和状态。现在拆成
+            <code>ConfigManager</code>、<code>PathResolver</code>、<code>StateTracker</code>，
+            通过构造函数注入给每个步骤。
+          </p>
+          <span class="why">为什么：三个职责的变更频率完全不同，混在一起既难测也难替换。</span>
+        </article>
+
+        <article class="decision">
+          <h3>用 <code>weight</code> 一个参数同时表达启用与权重</h3>
+          <p>
+            <code>weight &gt; 0</code> 表示启用，并作为被选中的相对权重；
+            <code>weight &lt;= 0</code> 表示禁用。增强器配置由
+            <code>AUGMENTER_META</code> 统一管理，只有一份定义。
+          </p>
+          <span class="why">为什么：<code>enabled</code> 与 <code>weight</code> 并存时，两者迟早互相矛盾。</span>
+        </article>
+
+        <article class="decision">
+          <h3>断点续跑用文件标记，而不是数据库</h3>
+          <p>
+            每个步骤完成后在任务目录写 <code>.step_&lt;name&gt;_done</code>，
+            重跑时由 <code>StateTracker.is_step_done()</code> 判断。产物目录本身就是任务状态的来源。
+          </p>
+          <span class="why">为什么：这套流程是批处理，文件标记足够可靠，也方便人工排查中间产物。</span>
+        </article>
+
+        <article class="decision">
+          <h3>删掉多余的一层抽象</h3>
+          <p>
+            早期设计的 <code>Executor</code> 调度层在实现后被移除，生命周期管理直接内联在
+            <code>Pipeline._run_single()</code> 里。
+          </p>
+          <span class="why">为什么：这层只做转发，增加了调试跳转，却没有带来实际扩展收益。</span>
+        </article>
+
+        <article class="decision">
+          <h3>ASR 噪声用拼音与语义两路打分</h3>
+          <p>
+            预处理阶段一次性计算异常词的拼音串与语义向量。替换时综合得分为
+            <code>α × 拼音相似度 + (1 − α) × 语义相似度</code>（默认 <code>α = 0.7</code>），
+            拼音相似度按编辑距离归一化。
+          </p>
+          <span class="why">为什么：只按拼音匹配会替换出语义无关的词；只按语义又会丢掉真实转写错误的形态。</span>
+        </article>
+
+        <article class="decision">
+          <h3>增强步骤做三处性能优化</h3>
+          <p>
+            分词结果用 <code>lru_cache</code> 缓存；确认文本真的变化后才 <code>deepcopy</code>；
+            循环外预先取出所有可增强消息的文本。
+          </p>
+          <span class="why">为什么：增强是逐条 × 逐变体的嵌套循环，重复分词和多余拷贝会放大成主要开销。</span>
+        </article>
+      </div>
+
+      <h2>工程证据</h2>
+      <ul>
+        <li>流水线 72 个测试通过。</li>
+        <li>增强器分三类注册：词法 6 种、语序 1 种、模型侧 <code>asr_noise</code> 1 种，共 8 种。</li>
+        <li>增强策略支持 <code>single</code> 与 <code>multi_step</code>：前者按权重选一个，后者随机叠加多个。</li>
+        <li>分析器（保留率、轮次分布）与报告器（CSV / JSON / Matplotlib）都走注册表，可按配置启用。</li>
+        <li>性能优化后，1 万条数据的增强步骤实测约快 16 秒。</li>
+        <li>项目规模约 144 个 Python 文件、13,110 行。</li>
+      </ul>
+
+      <h2>与 Agent 的接口</h2>
+      <p>
+        语义修复不是写死在主链路里的，而是以 <code>05b_agent</code> 步骤接入，位置在增强之前。
+        该步骤目前是 M0 透传版：不改数据，只产出处理清单，用来验证插件能被正确加载、跳过和卸载。
+        输出契约已经固定：
+      </p>
+      <pre><code>{output_dir}/{run_id}/agent_training_data.json   修复后的数据（M0 等于输入）
+{output_dir}/{run_id}/agent_manifest.jsonl       逐条处理记录
+{output_dir}/{run_id}/run_metadata.json          运行元信息</code></pre>
+      <p>
+        逐条记录用对话内容的哈希作为稳定主键，因为现网数据没有可用的对话 ID，而下标跨 run 不稳定。
+        插件依赖主工程的 <code>PipelineStep</code> 抽象，因此不在开源切片内。
+      </p>
+
+      <h2>局限</h2>
+      <ul>
+        <li><strong>没有下游效果验证。</strong>增强后的数据是否让模型更好，这条链路本身不回答。</li>
+        <li><strong>清洗规则是业务相关的。</strong>换一个领域，规则需要重写，不能直接迁移。</li>
+        <li><strong>增强比例靠人工调。</strong>权重决定噪声分布，没有自动搜索最优配比。</li>
+        <li><strong>不可公开验证。</strong>代码与数据不公开，外部只能通过架构与工程事实判断。</li>
+      </ul>
+
+      <h2>我的工作</h2>
+      <p>
+        团队给出初始方向，我负责流水线重构与主要实现：五步生命周期与断点续跑、
+        三组件拆分、增强器注册与权重体系、分析器/报告器插件化、
+        ASR 噪声增强、性能优化，以及与 Agent 的插件接口。
+      </p>
+
+      <div class="next-prev">
+        <a href="../generator/index.html">
+          <span class="label">Prev</span>← 可控多轮对话生成引擎
+        </a>
+        <a href="../agent/index.html">
+          <span class="label">Next</span>回到主案例：对话数据修复 Agent →
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap-wide">
+      <span>© 2026 GUO Zimeng · 作品集内容依据实际项目事实整理</span>
+      <div class="footer-links">
+        <a href="../../index.html">首页</a>
+        <a href="../agent/index.html">Agent</a>
+        <a href="../generator/index.html">生成引擎</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

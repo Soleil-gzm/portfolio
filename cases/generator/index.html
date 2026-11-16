@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>可控多轮对话生成引擎 | Portfolio</title>
+  <meta name="description" content="配置驱动的多轮对话生成：概率矩阵、条件解析、施压策略、缓存指纹与分片续跑。私有项目，仅展示架构与设计取舍。">
+  <meta name="theme-color" content="#f7f5f0">
+  <link rel="stylesheet" href="../../assets/css/site.css">
+  <script src="../../assets/js/site.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+
+  <header class="site-header">
+    <div class="wrap-wide">
+      <a class="brand" href="../../index.html">
+        <span class="brand-mark" aria-hidden="true">GZ</span>
+        <span>LLM Agent · Data Quality</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="../../index.html">首页</a>
+        <a href="../agent/index.html">Agent</a>
+        <a href="index.html">生成引擎</a>
+        <a href="../pipeline/index.html">数据管线</a>
+        <a class="optional" href="../../notes/asr-error-modeling.html">补充</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap">
+      <nav class="breadcrumb" aria-label="面包屑">
+        <a href="../../index.html">首页</a>
+        <span aria-hidden="true">/</span>
+        <span>可控多轮对话生成引擎</span>
+      </nav>
+
+      <header class="case-hero">
+        <p class="eyebrow">Case 02 · Generator</p>
+        <h1>可控多轮对话生成引擎</h1>
+        <p class="lede">
+          人工写对话覆盖不了条件组合，纯 LLM 生成又不可控、不可复现。
+          这个引擎把对话拆成“路径 + 条件 + 话术 + 施压”，
+          让每条样本的生成过程可以被配置、复现和审计。
+        </p>
+        <div class="case-meta">
+          <span>Private</span>
+          <span>Architecture only</span>
+          <span>Python</span>
+          <span>Config-driven</span>
+        </div>
+      </header>
+
+      <div class="stats" aria-label="关键事实">
+        <div class="stat">
+          <div class="stat-value">166</div>
+          <div class="stat-label">话术模板文件（三个版本）</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">8 × 6</div>
+          <div class="stat-label">阶段 × 客户类型的模板组织</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">55</div>
+          <div class="stat-label">条件引擎测试通过</div>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <span class="callout-title">公开展示边界</span>
+        项目代码、配置、话术模板和业务数据均不公开。本页只描述<strong>已实现的架构、设计取舍与可验证的工程事实</strong>，
+        不含任何业务规则、客户信息或生产指标。
+      </div>
+
+      <h2>问题</h2>
+      <p>
+        对话训练数据需要覆盖大量条件组合：同一阶段下，不同状态、不同客户反应会走不同路径。
+        人工编写无法穷举，而且难以保证分布可控；直接让 LLM 自由生成，则会出现三个问题：
+      </p>
+      <ul>
+        <li><strong>不可控</strong>：无法指定必须经过哪些模块、最多重复几次。</li>
+        <li><strong>不可复现</strong>：同一需求两次生成结果不同，问题无法定位。</li>
+        <li><strong>不可审计</strong>：说不清一条样本为什么走了这条路径、为什么在这里结束。</li>
+      </ul>
+      <p>
+        因此引擎把“生成什么”交给配置和概率矩阵，把“是否适用”交给结构化条件，
+        把“怎么施压、何时结束”交给可切换策略，并输出 trace 供分析。
+      </p>
+
+      <h2>架构</h2>
+      <figure class="figure">
+        <img src="../../assets/img/generator-architecture.svg" alt="配置、概率矩阵与话术表经路径生成、条件筛选、施压和对话构建输出 JSON 与 trace；支持缓存指纹、分片续跑与统计报告。" loading="lazy">
+        <figcaption>从配置与概率矩阵到 JSON + trace 的完整链路。</figcaption>
+      </figure>
+      <p>
+        核心流程是：读取 <code>base + tasks</code> 配置 → 读取概率矩阵和话术表 →
+        生成或复用路径 → 加载案例（占位数据与 system）→ 按条件筛选候选话术 →
+        插入施压片段 → 构造对话 → 输出 JSON 与 trace。
+      </p>
+
+      <h2>关键决策</h2>
+      <div class="decisions">
+        <article class="decision">
+          <h3>概率矩阵是模块集合的唯一真实来源</h3>
+          <p>
+            模块集合从概率矩阵的行列名提取，配置在运行期由
+            <code>sync_config_from_prob()</code> 同步，而不是在代码里再维护一份模块列表。
+          </p>
+          <span class="why">为什么：两套定义迟早会漂移，生成路径与校验规则会对不上。</span>
+        </article>
+
+        <article class="decision">
+          <h3>条件解析用结构化原子条件，strict 模式不静默放行</h3>
+          <p>
+            解析器按 <code>&amp;</code> 拆分，逐 token 查注册表，同族条件支持 <code>|</code>；
+            当前注册 13 个业务原子条件。默认 strict：出现无法识别的 token 直接抛错，
+            不再“当作无条件 + warning”。
+          </p>
+          <span class="why">为什么：条件写错时静默判 True，会生成大量看似正常的错样本。</span>
+        </article>
+
+        <article class="decision">
+          <h3>路径缓存必须带概率指纹</h3>
+          <p>
+            缓存键由 <code>seed + num_paths + prob_fingerprint</code> 组成。概率表变化后
+            缓存自动失效，并列出是哪一项不匹配，而不是继续复用旧路径。
+          </p>
+          <span class="why">为什么：复用旧路径会让“新配置”生成出旧分布，且很难察觉。</span>
+        </article>
+
+        <article class="decision">
+          <h3>施压策略可切换，而不是写死一条曲线</h3>
+          <p>
+            支持 <code>normalized</code>、<code>absolute</code>、<code>sigmoid</code>、
+            <code>linear_decay</code> 四种策略，由工厂按配置创建；施压片段沿
+            “祖先链 + 后代链”筛选，并受总次数上限约束。
+          </p>
+          <span class="why">为什么：不同阶段的压力分布不同，单一曲线会把分布压成一种形状。</span>
+        </article>
+
+        <article class="decision">
+          <h3>分片生成 + 完成标记续跑</h3>
+          <p>
+            并行生成器按分片写 JSONL，依据已完成的 <code>shard_*.jsonl</code> 恢复，
+            最后流式合并为标准 JSON。出现未替换占位符时直接中止，不产出半成品。
+          </p>
+          <span class="why">为什么：长任务中断后从头再来，成本和时间都不可接受。</span>
+        </article>
+
+        <article class="decision">
+          <h3>配置是 base + tasks 的深合并</h3>
+          <p>
+            基础配置与任务配置递归合并，批量任务只覆盖差异字段；运行期对关键字段重新校验，
+            配置不是“纯文档”。
+          </p>
+          <span class="why">为什么：批量生成需要共享默认值，同时保留单任务覆盖能力。</span>
+        </article>
+      </div>
+
+      <h2>工程证据</h2>
+      <ul>
+        <li>条件引擎 55 个测试通过（<code>PYTHONPATH=scripts_general</code>，覆盖条件解析与后代链）。</li>
+        <li>缓存不匹配时输出 <code>seed</code> / <code>num_paths</code> / <code>fingerprint</code> 的具体差异原因。</li>
+        <li>分片文件可断点恢复并合并；未替换占位符被视为致命错误，直接中止 worker。</li>
+        <li>话术模板按 8 个阶段 × 6 类客户组织，三个版本共 166 个模板文件；输入侧有 34 个话术/概率矩阵 Excel 样本。</li>
+      </ul>
+      <div class="callout">
+        <span class="callout-title">测试口径</span>
+        这里只声明条件引擎的 55 个测试通过。项目全量测试在当前环境存在依赖缺失，
+        因此不写成“全量测试通过”。
+      </div>
+
+      <h2>生成结构示意（虚构）</h2>
+      <p class="small muted">
+        下面是一个完全虚构的中立域示例，只用于说明“路径 + 条件 + 话术”的组织方式，
+        不对应任何真实业务文本。
+      </p>
+      <pre><code>user      : 你好，我想把下周二的预约改到周四。
+assistant : 可以的，您原本是周二上午十点，对吗？
+user      : 对，改到周四下午三点。
+assistant : 已为您改到周四下午三点，稍后会发送确认短信。</code></pre>
+      <p class="small muted">
+        对应结构：<code>身份确认 → 信息核对 → 变更确认 → 结束</code>；
+        每一步的候选话术受条件筛选，结束由再见概率控制。
+      </p>
+
+      <h2>局限</h2>
+      <ul>
+        <li><strong>条件语法有限。</strong>只支持 <code>&amp;</code> 与同族 <code>|</code>，不支持 <code>NOT</code> 和括号优先级。</li>
+        <li><strong>没有端到端质量指标。</strong>引擎保证可控与可复现，不直接保证生成文本自然。</li>
+        <li><strong>依赖人工配置。</strong>概率矩阵和话术表的质量决定输出分布。</li>
+        <li><strong>不可公开验证。</strong>代码与数据不公开，外部只能通过架构与工程事实判断。</li>
+      </ul>
+
+      <h2>我的工作</h2>
+      <p>
+        团队给出初始方向，我负责架构设计与主要实现：配置合并与概率表同步、条件解析器与原子条件体系、
+        路径生成与缓存指纹、施压策略接入、分片并行与续跑、trace 与分析。
+        项目规模约 90 个 Python 文件、13,961 行。
+      </p>
+
+      <div class="next-prev">
+        <a href="../agent/index.html">
+          <span class="label">Prev</span>← 对话数据修复 Agent
+        </a>
+        <a href="../pipeline/index.html">
+          <span class="label">Next</span>清洗与语义增强流水线 →
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap-wide">
+      <span>© 2026 GUO Zimeng · 作品集内容依据实际项目事实整理</span>
+      <div class="footer-links">
+        <a href="../../index.html">首页</a>
+        <a href="../agent/index.html">Agent</a>
+        <a href="../pipeline/index.html">数据管线</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

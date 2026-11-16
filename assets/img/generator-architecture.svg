@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 460" role="img" aria-labelledby="title desc">
+  <title id="title">可控多轮对话生成引擎架构</title>
+  <desc id="desc">配置、概率矩阵与话术表经路径生成、条件筛选、施压和对话构建输出 JSON 与 trace；路径缓存由 seed、num_paths 和概率指纹校验，分片支持续跑与合并。</desc>
+  <defs>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7b8088"/>
+    </marker>
+    <style>
+      .b { fill: #fffefb; stroke: #ded9cf; stroke-width: 1.2; }
+      .ba { fill: #e3efec; stroke: #0f6b5f; stroke-width: 1.2; }
+      .t { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", sans-serif; fill: #17181a; }
+      .m { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", sans-serif; fill: #7b8088; }
+      .k { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill: #0f6b5f; }
+      .l { stroke: #7b8088; stroke-width: 1.2; fill: none; marker-end: url(#a2); }
+      .d { stroke: #c7c0b3; stroke-width: 1.1; stroke-dasharray: 4 4; fill: none; }
+    </style>
+  </defs>
+
+  <text x="40" y="30" class="k" font-size="11" letter-spacing="1.5">GENERATOR</text>
+  <text x="40" y="52" class="t" font-size="18" font-weight="700">配置驱动的受控生成</text>
+
+  <!-- row A -->
+  <rect class="b" x="40" y="92" width="150" height="104" rx="8"/>
+  <text x="54" y="116" class="k" font-size="10">INPUT</text>
+  <text x="54" y="138" class="t" font-size="12">配置 + 概率矩阵</text>
+  <text x="54" y="158" class="m" font-size="11">base + tasks</text>
+  <text x="54" y="176" class="m" font-size="11">Excel 话术表</text>
+
+  <rect class="b" x="210" y="92" width="150" height="104" rx="8"/>
+  <text x="224" y="116" class="k" font-size="10">PATHS</text>
+  <text x="224" y="138" class="t" font-size="12">路径生成</text>
+  <text x="224" y="158" class="m" font-size="11">加权起始模块</text>
+  <text x="224" y="176" class="m" font-size="11">max_repeat</text>
+
+  <rect class="b" x="380" y="92" width="150" height="104" rx="8"/>
+  <text x="394" y="116" class="k" font-size="10">FILTER</text>
+  <text x="394" y="138" class="t" font-size="12">条件筛选</text>
+  <text x="394" y="158" class="m" font-size="11">13 个原子条件</text>
+  <text x="394" y="176" class="m" font-size="11">strict 模式</text>
+
+  <rect class="b" x="550" y="92" width="150" height="104" rx="8"/>
+  <text x="564" y="116" class="k" font-size="10">PRESSURE</text>
+  <text x="564" y="138" class="t" font-size="12">施压片段</text>
+  <text x="564" y="158" class="m" font-size="11">4 种策略</text>
+  <text x="564" y="176" class="m" font-size="11">祖先链 + 后代链</text>
+
+  <rect class="ba" x="720" y="92" width="150" height="104" rx="8"/>
+  <text x="734" y="116" class="k" font-size="10">BUILD</text>
+  <text x="734" y="138" class="t" font-size="12" font-weight="700">对话构建</text>
+  <text x="734" y="158" class="m" font-size="11">条件候选加权</text>
+  <text x="734" y="176" class="m" font-size="11">动态再见</text>
+
+  <rect class="b" x="890" y="92" width="150" height="104" rx="8"/>
+  <text x="904" y="116" class="k" font-size="10">OUTPUT</text>
+  <text x="904" y="138" class="t" font-size="12">JSON + trace</text>
+  <text x="904" y="158" class="m" font-size="11">对话样本</text>
+  <text x="904" y="176" class="m" font-size="11">路径 / 停止原因</text>
+
+  <!-- arrows -->
+  <line class="l" x1="190" y1="144" x2="204" y2="144"/>
+  <line class="l" x1="360" y1="144" x2="374" y2="144"/>
+  <line class="l" x1="530" y1="144" x2="544" y2="144"/>
+  <line class="l" x1="700" y1="144" x2="714" y2="144"/>
+  <line class="l" x1="870" y1="144" x2="884" y2="144"/>
+
+  <!-- support row -->
+  <rect class="b" x="40" y="236" width="300" height="78" rx="8"/>
+  <text x="54" y="258" class="k" font-size="10">CACHE KEY</text>
+  <text x="54" y="279" class="t" font-size="12">seed + num_paths + prob_fingerprint</text>
+  <text x="54" y="299" class="m" font-size="11">概率表变更 → 缓存失效并列出差异</text>
+
+  <rect class="b" x="360" y="236" width="300" height="78" rx="8"/>
+  <text x="374" y="258" class="k" font-size="10">SCALE</text>
+  <text x="374" y="279" class="t" font-size="12">分片生成 + 断点续跑</text>
+  <text x="374" y="299" class="m" font-size="11">shard_*.jsonl → 流式合并为 JSON</text>
+
+  <rect class="b" x="680" y="236" width="360" height="78" rx="8"/>
+  <text x="694" y="258" class="k" font-size="10">TRACE</text>
+  <text x="694" y="279" class="t" font-size="12">路径 · 模块状态 · 停止原因 · 施压</text>
+  <text x="694" y="299" class="m" font-size="11">可选分析器生成统计报告</text>
+
+  <!-- principle band -->
+  <rect x="40" y="348" width="1000" height="76" rx="8" fill="#f7f5f0" stroke="#ded9cf" stroke-dasharray="4 4"/>
+  <text x="58" y="372" class="k" font-size="10">CONTRACT</text>
+  <text x="58" y="394" class="t" font-size="12">概率矩阵是模块集合的唯一真实来源；配置在运行期同步，不在代码里硬编码模块。</text>
+  <text x="58" y="413" class="m" font-size="11">条件语法边界固定为 &amp; 与同族 |，不支持 NOT 和括号优先级；未知 token 在 strict 模式下直接报错。</text>
+</svg>

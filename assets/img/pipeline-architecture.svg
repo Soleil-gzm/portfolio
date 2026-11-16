@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 460" role="img" aria-labelledby="title desc">
+  <title id="title">对话数据清洗与语义增强流水线架构</title>
+  <desc id="desc">对话 JSON 经拆分、分桶、清洗、收尾、增强五个步骤输出增强数据；周边由配置管理、路径解析、状态追踪支撑，增强器按词法、语序、模型三类注册，Agent 以插件接入。</desc>
+  <defs>
+    <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7b8088"/>
+    </marker>
+    <style>
+      .b { fill: #fffefb; stroke: #ded9cf; stroke-width: 1.2; }
+      .ba { fill: #e3efec; stroke: #0f6b5f; stroke-width: 1.2; }
+      .t { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", sans-serif; fill: #17181a; }
+      .m { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", sans-serif; fill: #7b8088; }
+      .k { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill: #0f6b5f; }
+      .l { stroke: #7b8088; stroke-width: 1.2; fill: none; marker-end: url(#a3); }
+      .d { stroke: #c7c0b3; stroke-width: 1.1; stroke-dasharray: 4 4; fill: none; }
+    </style>
+  </defs>
+
+  <text x="40" y="30" class="k" font-size="11" letter-spacing="1.5">PIPELINE</text>
+  <text x="40" y="52" class="t" font-size="18" font-weight="700">五步可插拔流水线</text>
+
+  <!-- row A -->
+  <rect class="b" x="40" y="92" width="140" height="96" rx="8"/>
+  <text x="54" y="116" class="k" font-size="10">INPUT</text>
+  <text x="54" y="138" class="t" font-size="12">对话 JSON</text>
+  <text x="54" y="158" class="m" font-size="11">原始样本</text>
+
+  <rect class="b" x="200" y="92" width="140" height="96" rx="8"/>
+  <text x="214" y="116" class="k" font-size="10">01</text>
+  <text x="214" y="138" class="t" font-size="12">split</text>
+  <text x="214" y="158" class="m" font-size="11">拆分对话</text>
+
+  <rect class="b" x="360" y="92" width="140" height="96" rx="8"/>
+  <text x="374" y="116" class="k" font-size="10">02</text>
+  <text x="374" y="138" class="t" font-size="12">bucket</text>
+  <text x="374" y="158" class="m" font-size="11">按轮次分桶</text>
+
+  <rect class="b" x="520" y="92" width="140" height="96" rx="8"/>
+  <text x="534" y="116" class="k" font-size="10">03</text>
+  <text x="534" y="138" class="t" font-size="12">clean</text>
+  <text x="534" y="158" class="m" font-size="11">规则清洗</text>
+
+  <rect class="b" x="680" y="92" width="140" height="96" rx="8"/>
+  <text x="694" y="116" class="k" font-size="10">04</text>
+  <text x="694" y="138" class="t" font-size="12">finalize</text>
+  <text x="694" y="158" class="m" font-size="11">收尾与校验</text>
+
+  <rect class="ba" x="840" y="92" width="140" height="96" rx="8"/>
+  <text x="854" y="116" class="k" font-size="10">05</text>
+  <text x="854" y="138" class="t" font-size="12" font-weight="700">augment</text>
+  <text x="854" y="158" class="m" font-size="11">语义增强</text>
+
+  <line class="l" x1="180" y1="140" x2="194" y2="140"/>
+  <line class="l" x1="340" y1="140" x2="354" y2="140"/>
+  <line class="l" x1="500" y1="140" x2="514" y2="140"/>
+  <line class="l" x1="660" y1="140" x2="674" y2="140"/>
+  <line class="l" x1="820" y1="140" x2="834" y2="140"/>
+
+  <!-- output arrow down -->
+  <path class="d" d="M910,188 L910,214"/>
+
+  <!-- output band -->
+  <rect class="b" x="680" y="214" width="360" height="70" rx="8"/>
+  <text x="694" y="236" class="k" font-size="10">OUTPUT</text>
+  <text x="694" y="257" class="t" font-size="12">原始 + 增强变体 + 统计报告</text>
+  <text x="694" y="276" class="m" font-size="11">JSON / JSONL · CSV · Matplotlib</text>
+
+  <!-- augmenters -->
+  <rect class="b" x="40" y="214" width="610" height="70" rx="8"/>
+  <text x="54" y="236" class="k" font-size="10">AUGMENTERS · 8</text>
+  <text x="54" y="257" class="t" font-size="12">词法 6：insert_filler · stutter · homophone · synonym · random_delete · word_repetition</text>
+  <text x="54" y="276" class="m" font-size="11">语序 1：reorder　模型 1：asr_noise（拼音相似度 + 语义余弦加权）</text>
+
+  <!-- support -->
+  <rect class="b" x="40" y="306" width="400" height="64" rx="8"/>
+  <text x="54" y="328" class="k" font-size="10">CORE</text>
+  <text x="54" y="349" class="t" font-size="12">ConfigManager · PathResolver · StateTracker</text>
+  <text x="54" y="364" class="m" font-size="10">配置 / 路径 / 断点标记三组件分离</text>
+
+  <rect class="b" x="460" y="306" width="300" height="64" rx="8"/>
+  <text x="474" y="328" class="k" font-size="10">ANALYTICS</text>
+  <text x="474" y="349" class="t" font-size="12">Retention · TurnDistribution</text>
+  <text x="474" y="364" class="m" font-size="10">可插拔报告器</text>
+
+  <rect class="ba" x="780" y="306" width="260" height="64" rx="8"/>
+  <text x="794" y="328" class="k" font-size="10">PLUGIN</text>
+  <text x="794" y="349" class="t" font-size="12" font-weight="700">05b_agent</text>
+  <text x="794" y="364" class="m" font-size="10">固定输出契约，不侵入主流程</text>
+
+  <!-- principle -->
+  <rect x="40" y="392" width="1000" height="50" rx="8" fill="#f7f5f0" stroke="#ded9cf" stroke-dasharray="4 4"/>
+  <text x="58" y="414" class="k" font-size="10">DESIGN</text>
+  <text x="58" y="433" class="t" font-size="11">weight &gt; 0 同时表示启用与权重；步骤完成标记驱动续跑；增强器懒加载，重资源只在首次使用时初始化。</text>
+</svg>
