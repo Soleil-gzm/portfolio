@@ -1,5 +1,7 @@
 # Local-only working documents (not part of the published portfolio)
 PORTFOLIO_DESIGN.md
+resume-agent-platform.md
+resume-llm-evaluation-data.md
 
 # OS / editor noise
 .DS_Store
