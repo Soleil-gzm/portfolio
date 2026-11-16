@@ -1,0 +1,126 @@
+{
+  "verified_at": "2026-11-16",
+  "note": "所有页面数字必须能追溯到本文件 sources 中的路径或核验命令；修改数字时先改这里。",
+  "agent": {
+    "display_name": "对话数据修复 Agent",
+    "stage": "检测 + 回退（不重写）",
+    "license": "Apache-2.0",
+    "public_files": 74,
+    "root_files": 7,
+    "excluded_files": 15,
+    "tests_passed": 353,
+    "tests_skipped": 5,
+    "defects_total": 120,
+    "defect_types": 6,
+    "defects_per_type": 20,
+    "clean_total": 12,
+    "arms": {
+      "A3": {
+        "decision": "规则",
+        "macro_blocked": 0.8333,
+        "false_positive": "0/12",
+        "tokens": 0,
+        "calls": 0,
+        "cost_cny": 0.0
+      },
+      "A3L": {
+        "decision": "LLM function calling",
+        "macro_blocked": 0.8333,
+        "false_positive": "0/12",
+        "tokens": 251561,
+        "calls": 346,
+        "cost_cny": 0.3987
+      },
+      "A4": {
+        "decision": "LLM + 语义判官",
+        "macro_blocked": 1.0,
+        "false_positive": "0/12",
+        "tokens": 305910,
+        "calls": 423,
+        "cost_cny": 0.5495,
+        "stopped": 1
+      }
+    },
+    "a4_raw_macro_blocked": 0.9917,
+    "d1_before": "0/20",
+    "d1_after": "20/20",
+    "cost_delta_a3l_to_a4_cny": 0.15,
+    "cost_delta_a3_to_a3l_cny": 0.40,
+    "sources": [
+      "../data_cleaning_and_augmentation_pipeline/agent/README.md",
+      "../data_cleaning_and_augmentation_pipeline/portfolio/agent-augmentation/benchmark_report.md",
+      "../data_cleaning_and_augmentation_pipeline/portfolio/agent-augmentation/data/ablation_A3.json",
+      "../data_cleaning_and_augmentation_pipeline/portfolio/agent-augmentation/data/ablation_A3L.json",
+      "../data_cleaning_and_augmentation_pipeline/portfolio/agent-augmentation/data/ablation_A4.json",
+      "../data_cleaning_and_augmentation_pipeline/portfolio/agent-augmentation/data/ablation_A4.raw.json"
+    ]
+  },
+  "generator": {
+    "display_name": "可控多轮对话生成引擎",
+    "visibility": "private",
+    "python_files": 90,
+    "python_lines": 13961,
+    "prompt_files": 166,
+    "excel_samples": 34,
+    "condition_tests_passed": 55,
+    "stages": 8,
+    "customer_types": 6,
+    "pressure_strategies": 4,
+    "sources": [
+      "../module_based_dialogue_synthesis/docs/architecture.md",
+      "../module_based_dialogue_synthesis/docs/progress.md",
+      "../module_based_dialogue_synthesis/scripts_general/core/generation/dialogue_builder.py",
+      "../module_based_dialogue_synthesis/scripts_general/core/conditions/parser.py",
+      "../module_based_dialogue_synthesis/scripts_general/core/pressure/pressure_manager.py"
+    ]
+  },
+  "pipeline": {
+    "display_name": "对话数据清洗与语义增强流水线",
+    "visibility": "private",
+    "python_files": 144,
+    "python_lines": 13110,
+    "steps": 5,
+    "augmenters": 8,
+    "tests_passed": 72,
+    "sources": [
+      "../data_cleaning_and_augmentation_pipeline/README.md",
+      "../data_cleaning_and_augmentation_pipeline/docs/architecture.md",
+      "../data_cleaning_and_augmentation_pipeline/pipeline/steps/augment.py",
+      "../data_cleaning_and_augmentation_pipeline/agent/plugin/step.py"
+    ]
+  },
+  "asr": {
+    "display_name": "ASR 转录错误模式分析",
+    "visibility": "private",
+    "python_files": 27,
+    "python_lines": 2811,
+    "sentence_percentile": 95,
+    "sources": [
+      "../ASR_Error_Modeling/README.md",
+      "../ASR_Error_Modeling/configs/pipeline_config.yaml"
+    ]
+  },
+  "clustering": {
+    "display_name": "意图句向量聚类",
+    "visibility": "private",
+    "input_intents": 126241,
+    "clustered_intents": 125964,
+    "k_values": [250, 500, 750, 1000],
+    "silhouette_range": "0.0545–0.0586",
+    "sources": [
+      "../Sentence_Transformers/ST_1/README.md",
+      "../Sentence_Transformers/ST_1/outputs/20260413_105308_base_embeddings_kmeans_K250/cluster_metrics.json"
+    ]
+  },
+  "annotator": {
+    "display_name": "话术微调标注工具",
+    "visibility": "needs-confirmation",
+    "html_lines": 1746,
+    "html_size_kb": 66,
+    "external_dependencies": 0,
+    "sources": [
+      "../datalabel/README.md",
+      "../datalabel/pair_annotator.html"
+    ]
+  }
+}

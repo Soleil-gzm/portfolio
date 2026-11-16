@@ -1,0 +1,8 @@
+# Local-only working documents (not part of the published portfolio)
+PORTFOLIO_DESIGN.md
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
