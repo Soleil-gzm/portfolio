@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LLM Agent · 对话数据质量 | Portfolio</title>
+  <meta name="description" content="LLM Agent 工程作品集：可控多轮对话生成、训练数据清洗与增强、可复现评测的对话修复 Agent。">
+  <meta name="theme-color" content="#f7f5f0">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script src="assets/js/site.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+
+  <header class="site-header">
+    <div class="wrap-wide">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true">GZ</span>
+        <span>LLM Agent · Data Quality</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="index.html" aria-current="page">首页</a>
+        <a href="cases/agent/index.html">Agent</a>
+        <a href="cases/generator/index.html">生成引擎</a>
+        <a href="cases/pipeline/index.html">数据管线</a>
+        <a class="optional" href="notes/asr-error-modeling.html">补充</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="wrap">
+        <p class="eyebrow">LLM Agent · Dialogue Data Quality</p>
+        <h1>把 Agent 做成可控、可观测、可复现评测的系统。</h1>
+        <p class="lede">
+          我负责对话训练数据的生成与质量工程。规则流水线能处理结构和实体，
+          但处理不了“答非所问”这类跨轮语义问题，因此我把质量处置做成可插拔 Agent，
+          并为它建立基线、对照臂、Trace 与成本口径。
+        </p>
+
+        <div class="stats" aria-label="关键结果">
+          <div class="stat">
+            <div class="stat-value">353</div>
+            <div class="stat-label">开源切片测试通过（5 skipped）</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">100%</div>
+            <div class="stat-label">宏观阻断率（A4，120 条程序化缺陷）</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">0/12</div>
+            <div class="stat-label">干净样本误报</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="btn btn-primary" href="cases/agent/index.html">查看主案例</a>
+          <a class="btn" href="https://github.com/Soleil-gzm">GitHub</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>一条问题主线</h2>
+          <span class="section-index">01 / 03</span>
+        </div>
+        <div class="lineage">
+          <article class="lineage-step">
+            <h3>可控生成</h3>
+            <p>人工写对话覆盖不了条件组合。用概率矩阵、条件解析和施压策略生成可控样本。</p>
+          </article>
+          <article class="lineage-step">
+            <h3>清洗与增强</h3>
+            <p>生成的数据仍有轮次错乱、分布不均、缺噪声。用可插拔流水线做结构治理和鲁棒性增强。</p>
+          </article>
+          <article class="lineage-step">
+            <h3>Agent 质量闭环</h3>
+            <p>规则能管实体，管不了跨轮语义。用受约束的工具循环检测、处置，并证明它没有改坏数据。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>项目</h2>
+          <span class="section-index">02 / 03</span>
+        </div>
+        <div class="cards">
+          <a class="card" href="cases/agent/index.html">
+            <div class="card-top">
+              <h3>对话数据修复 Agent</h3>
+              <span class="card-tag live">可复现</span>
+            </div>
+            <dl>
+              <dt>问题</dt>
+              <dd>模板拼接对话局部通顺、全局不连贯；直接 LLM 重写会改坏且无法证明。</dd>
+              <dt>我的角色</dt>
+              <dd>独立设计并实现运行时、工具、评测与开源切片。</dd>
+              <dt>关键手段</dt>
+              <dd>决策循环、6 类缺陷、5 条保真约束、四元组基线指纹、成本账本。</dd>
+              <dt>证据</dt>
+              <dd>120 条缺陷 + 12 条干净样本；A3/A3L/A4 消融；353 tests passed。</dd>
+            </dl>
+            <span class="card-more">查看评测与 Trace →</span>
+          </a>
+
+          <a class="card" href="cases/generator/index.html">
+            <div class="card-top">
+              <h3>可控多轮对话生成引擎</h3>
+              <span class="card-tag">私有 · 仅架构</span>
+            </div>
+            <dl>
+              <dt>问题</dt>
+              <dd>纯 LLM 生成不可控、不可复现，条件组合难以覆盖和审计。</dd>
+              <dt>我的角色</dt>
+              <dd>团队给出初始方向，负责架构设计与主要实现。</dd>
+              <dt>关键手段</dt>
+              <dd>概率矩阵、条件解析、4 种施压策略、缓存指纹、分片续跑。</dd>
+              <dt>证据</dt>
+              <dd>166 个 prompt 模板；8 阶段 × 6 类客户；条件引擎 55 tests passed。</dd>
+            </dl>
+            <span class="card-more">查看设计取舍 →</span>
+          </a>
+
+          <a class="card" href="cases/pipeline/index.html">
+            <div class="card-top">
+              <h3>清洗与语义增强流水线</h3>
+              <span class="card-tag">私有 · 仅架构</span>
+            </div>
+            <dl>
+              <dt>问题</dt>
+              <dd>轮次错乱、人工数据无噪声、样本分布不均、ASR 错误难模拟。</dd>
+              <dt>我的角色</dt>
+              <dd>团队给出初始方向，负责流水线重构与主要实现。</dd>
+              <dt>关键手段</dt>
+              <dd>5 步流水线、8 类增强器、ASR 噪声双通道匹配、断点续跑。</dd>
+              <dt>证据</dt>
+              <dd>72 tests passed；Agent 以插件接入，输出契约固定。</dd>
+            </dl>
+            <span class="card-more">查看流水线设计 →</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>证据与边界</h2>
+          <span class="section-index">03 / 03</span>
+        </div>
+        <div class="evidence">
+          <div><b>120 + 12</b>6 类缺陷 × 20，加 12 条干净样本</div>
+          <div><b>3 arms</b>A3 规则 / A3L LLM 决策 / A4 语义判官</div>
+          <div><b>4-tuple</b>输入 / 配置 / 评估器 / 适配指纹</div>
+          <div><b>¥0.55</b>A4 跑完 132 条的总成本</div>
+        </div>
+
+        <div class="callout warn">
+          <span class="callout-title">边界声明</span>
+          Agent 当前是<strong>检测 + 回退</strong>，不是已完成的重写系统；评测集是<strong>程序化合成缺陷</strong>，不是真实生产缺陷。
+          私有项目只展示架构与设计取舍，不含任何业务数据、话术或客户信息。
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap-wide">
+      <span>© 2026 GUO Zimeng · 作品集内容依据实际项目事实整理</span>
+      <div class="footer-links">
+        <a href="cases/agent/index.html">主案例</a>
+        <a href="notes/asr-error-modeling.html">ASR 错误建模</a>
+        <a href="notes/intent-clustering.html">意图聚类</a>
+        <a href="https://github.com/Soleil-gzm">GitHub</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
