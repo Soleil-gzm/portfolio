@@ -110,57 +110,69 @@
         <article class="decision">
           <h3>概率矩阵是模块集合的唯一真实来源</h3>
           <p>
-            模块集合从概率矩阵的行列名提取，配置在运行期由
-            <code>sync_config_from_prob()</code> 同步，而不是在代码里再维护一份模块列表。
+            我希望路径生成与配置校验始终遵循同一套模块定义，避免多处维护造成规则漂移并降低维护成本。
+            因此，模块集合直接从概率矩阵的行列名提取，配置在运行期由
+            <code>sync_config_from_prob()</code> 同步，不在代码中重复维护模块列表。
           </p>
-          <span class="why">为什么：两套定义迟早会漂移，生成路径与校验规则会对不上。</span>
         </article>
 
         <article class="decision">
           <h3>条件解析用结构化原子条件，strict 模式不静默放行</h3>
           <p>
-            解析器按 <code>&amp;</code> 拆分，逐 token 查注册表，同族条件支持 <code>|</code>；
-            当前注册 13 个业务原子条件。默认 strict：出现无法识别的 token 直接抛错，
-            不再“当作无条件 + warning”。
+            最初我未充分考虑未知条件被静默放行的影响；配置错误如果继续参与生成，可能造成数据失真与分布漂移。
+            为此，我将涉及数据生成的解析错误改为显式失败：解析器按 <code>&amp;</code> 拆分，
+            逐 token 查询注册表，同族条件支持 <code>|</code>；当前注册 13 个业务原子条件。
+            默认启用 strict 模式，遇到无法识别的 token 直接抛错，不再“当作无条件 + warning”。
           </p>
-          <span class="why">为什么：条件写错时静默判 True，会生成大量看似正常的错样本。</span>
+        </article>
+
+        <article class="decision">
+          <h3>数据校验前置，异常数据直接终止</h3>
+          <p>
+            我将数据规则校验前置到生成阶段之前，提前检查输入数据是否符合要求；
+            一旦发现异常，立即检出并终止生成，防止问题数据继续进入后续流程，避免在生成完成后才发现问题。
+            这种方式减少了无效生成与事后返工，提高了批量生产效率。
+            后来，我把这一前置校验思路复用到其他项目的生产流程中。
+          </p>
         </article>
 
         <article class="decision">
           <h3>路径缓存必须带概率指纹</h3>
           <p>
-            缓存键由 <code>seed + num_paths + prob_fingerprint</code> 组成。概率表变化后
-            缓存自动失效，并列出是哪一项不匹配，而不是继续复用旧路径。
+            最初我按相同 seed 复用生成路径，后来发现其他参数变化时，相同 seed 仍可能命中旧缓存，
+            使新配置沿用旧路径分布。为此，我将缓存键扩展为
+            <code>seed + num_paths + prob_fingerprint</code>；概率表变化后缓存自动失效，
+            并列出具体不匹配项，避免无感知地复用旧路径。
           </p>
-          <span class="why">为什么：复用旧路径会让“新配置”生成出旧分布，且很难察觉。</span>
         </article>
 
         <article class="decision">
           <h3>特殊场景模块处理策略可切换，而不是写死一条曲线</h3>
           <p>
-            支持 <code>normalized</code>、<code>absolute</code>、<code>sigmoid</code>、
-            <code>linear_decay</code> 四种策略，由工厂按配置创建；特殊场景模块片段沿
-            “祖先链 + 后代链”筛选，并受总次数上限约束。
+            我将特殊场景模块与普通模块区分处理：前者可能需要根据业务需求插入不同位置，
+            出现分布也需要独立控制。为此，我引入 <code>normalized</code>、<code>absolute</code>、
+            <code>sigmoid</code>、<code>linear_decay</code> 四种曲线策略，由工厂按配置创建；
+            模块片段沿“祖先链 + 后代链”筛选，并受总次数上限约束，以适配不同阶段的插入与分布要求。
           </p>
-          <span class="why">为什么：不同阶段的特殊场景分布不同，单一处理策略难以覆盖各阶段需求。</span>
         </article>
 
         <article class="decision">
           <h3>分片生成 + 完成标记续跑</h3>
           <p>
-            并行生成器按分片写 JSONL，依据已完成的 <code>shard_*.jsonl</code> 恢复，
-            最后流式合并为标准 JSON。出现未替换占位符时直接中止，不产出半成品。
+            最初采用串行合成时，生成速度难以满足批量任务需求，因此我改为分片并行生成以提高效率。
+            考虑到服务器断联、内存压力等中断风险，我进一步引入 checkpoint：并行生成器按分片写入 JSONL，
+            依据已完成的 <code>shard_*.jsonl</code> 恢复，最后流式合并为标准 JSON。
+            出现未替换占位符时直接中止，避免产出半成品。
           </p>
-          <span class="why">为什么：长任务中断后从头再来，成本和时间都不可接受。</span>
         </article>
 
         <article class="decision">
           <h3>配置是 base + tasks 的深合并</h3>
           <p>
-            基础配置与任务配置递归合并，批量任务只覆盖差异字段；运行期对关键字段重新校验，
-            配置不是“纯文档”。
+            针对多批次任务通常只有少量参数差异的情况，我采用 base + tasks 的分层 YAML：
+            基础配置与任务配置递归合并，每个任务只覆盖差异字段，并支持一次批量运行多个生成项目，
+            减少重复配置带来的时间成本与出错风险。运行期仍会对关键字段重新校验，避免无效配置进入生成流程。
           </p>
-          <span class="why">为什么：批量生成需要共享默认值，同时保留单任务覆盖能力。</span>
         </article>
       </div>
 
