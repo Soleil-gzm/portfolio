@@ -40,9 +40,9 @@
         <p class="eyebrow">Case 02 · Generator</p>
         <h1>可控多轮对话生成引擎</h1>
         <p class="lede">
-          人工写对话覆盖不了条件组合，纯 LLM 生成又不可控、不可复现。
-          这个引擎把对话拆成“路径 + 条件 + 模板 + 施压”，
-          让每条样本的生成过程可以被配置、复现和审计。
+          我设计这套引擎时，主要解决人工编写对话效率低、难以随业务需求变化快速切换场景的问题。
+          系统读取标注人员维护的 Excel，以大量可复用的简单句为基础，按“路径生成 → 条件解析 →
+          case 模板生成 → 特殊场景模块处理”的框架批量构造多轮对话，并支持通过调整配置和模板快速适配新场景。
         </p>
         <div class="case-meta">
           <span>Private</span>
@@ -55,17 +55,23 @@
       <div class="stats" aria-label="关键事实">
         <div class="stat">
           <div class="stat-value">166</div>
-          <div class="stat-label">对话模板文件（三个版本）</div>
+          <div class="stat-label">输入目录中的 TXT 模板文件</div>
         </div>
         <div class="stat">
           <div class="stat-value">8 × 6</div>
-          <div class="stat-label">阶段 × 客户类型的模板组织</div>
+          <div class="stat-label">单版本：阶段目录 × 客户类型</div>
         </div>
         <div class="stat">
           <div class="stat-value">55</div>
-          <div class="stat-label">条件引擎测试通过</div>
+          <div class="stat-label">指定条件引擎测试通过</div>
         </div>
       </div>
+      <p class="small muted">
+        统计口径（2026-11-16）：166 为输入模板根目录下递归清点的 <code>.txt</code> 文件数，
+        不含 4 个 Markdown 说明和 1 个 Excel；8 × 6 指单个版本的 8 个阶段目录、每阶段 6 类客户模板；
+        55 为 <code>test_conditions_parser.py</code> 与 <code>test_descendant_chain.py</code>
+        两个测试文件的合计通过数，已实际复跑，不代表项目全量测试。
+      </p>
 
       <div class="callout warn">
         <span class="callout-title">公开展示边界</span>
@@ -163,7 +169,7 @@
         <li>条件引擎 55 个测试通过（<code>PYTHONPATH=scripts_general</code>，覆盖条件解析与后代链）。</li>
         <li>缓存不匹配时输出 <code>seed</code> / <code>num_paths</code> / <code>fingerprint</code> 的具体差异原因。</li>
         <li>分片文件可断点恢复并合并；未替换占位符被视为致命错误，直接中止 worker。</li>
-        <li>对话模板按 8 个阶段 × 6 类客户组织，三个版本共 166 个模板文件；输入侧有 34 个模板/概率矩阵 Excel 样本。</li>
+        <li>输入模板根目录共清点 166 个 TXT 模板文件；单个版本按 8 个阶段目录组织，每阶段包含 6 类客户模板；输入侧另有 34 个模板/概率矩阵 Excel 样本。</li>
       </ul>
       <div class="callout">
         <span class="callout-title">测试口径</span>
