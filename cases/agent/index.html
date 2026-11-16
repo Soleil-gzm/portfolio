@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,6 +10,7 @@
   <link rel="stylesheet" href="../../assets/css/site.css">
   <script src="../../assets/js/site.js" defer></script>
 </head>
+
 <body>
   <a class="skip-link" href="#main">跳到正文</a>
 
@@ -40,7 +42,6 @@
         <p class="eyebrow">Case 01 · Agent</p>
         <h1>对话数据修复 Agent</h1>
         <p class="lede">
-          在动手改数据之前，先把“怎么算改好了”定义清楚。
           这是一个可插拔的对话质量组件：检测跨轮断裂，优先保住原文，
           并用可复现的对照臂、Trace 与成本账本证明每一步决策。
         </p>
@@ -77,22 +78,31 @@
 
       <h2>问题与约束</h2>
       <p>
-        模板拼接生成的对话通常“局部通顺、全局不连贯”：每一句都像人话，但上下轮接不上。
-        直接让 LLM 重写会遇到三个问题：
+        模板拼接生成的对话通常“局部通顺、全局不连贯”，尤其是模块或场景切换处，
+        衔接可能生硬，甚至不符合真实对话逻辑。合成数据按上万条批次生成，
+        如果对每条对话都调用 LLM 检测并改写，会产生大量不必要的 API 开销。
+        因此，设计目标是先定位高风险轮次，再按需进行局部改写。实现上分为三类约束：
       </p>
       <ul>
-        <li><strong>改坏了没人知道</strong>：金额、日期、承诺被改写，结构被打乱。</li>
-        <li><strong>改好了没人证明</strong>：没有基线、没有对照，&ldquo;感觉更顺了&rdquo;不是结论。</li>
-        <li><strong>成本说不清</strong>：不知道多花的 token 换来了多少质量增量。</li>
+        <li><strong>保真校验（R1–R5）</strong>：<code>check_consistency</code> 比较改写前后的对话，
+          校验 system 逐字一致，消息数、role 与 loss 不变，实体集合不增不减、说话人分布一致，
+          并检查 assistant 是否异常复读 user 内容；违规以 <code>rule / turn / detail</code> 结构化返回。</li>
+        <li><strong>连贯性检查与回退（C0–C3）</strong>：<code>check_coherence</code> 检查相邻
+          assistant 轮次重复、空回复或过短回复，并可注入语义判官识别答非所问。
+          决策策略收到违规后调用 <code>fallback_keep</code> 返回原文；判官异常记为
+          <code>C0_judge_error</code>，不按校验通过处理。</li>
+        <li><strong>运行预算与成本计量</strong>：每次迭代检查迭代次数、工具调用数、token
+          和墙钟时间上限，并识别重复工具调用。决策与判官消耗的 token 均计入预算；
+          append-only 账本记录输入、输出、缓存 token、价格表版本和折算成本。</li>
       </ul>
       <p>
-        所以这个项目先解决后两条：先把评测口径、基线、对照臂和成本计量搭起来，
-        再决定是否让模型动数据。
+        当前版本先实现检测、回退、可复现评测与成本计量，为后续局部改写建立质量门禁。
       </p>
 
       <h2>架构</h2>
       <figure class="figure">
-        <img src="../../assets/img/agent-architecture.svg" alt="受损对话经适配器进入决策循环，循环调用一致性、连贯性与回退工具，输出原文或候选，并记录 Trace 与 token 账本；基线锁由四元组指纹构成。" loading="lazy">
+        <img src="../../assets/img/agent-architecture.svg"
+          alt="受损对话经适配器进入决策循环，循环调用一致性、连贯性与回退工具，输出原文或候选，并记录 Trace 与 token 账本；基线锁由四元组指纹构成。" loading="lazy">
         <figcaption>运行时由决策循环、工具层、可观测性与基线锁四部分组成。</figcaption>
       </figure>
       <p>
@@ -106,30 +116,31 @@
         <article class="decision">
           <h3>基线是一组指纹，不是一次结果</h3>
           <p>
-            基线由输入、配置、评估器、适配四个指纹组成。任一变化都会让“复现”失效，
-            因此 <code>baseline_lock.json</code> 一经生成不可静默覆盖；变更必须
+            基线由输入、配置、评估器、适配四个指纹组成，用来固定数据和评估口径。
+            <code>baseline_lock.json</code> 一经生成不可静默覆盖；变更必须
             <code>--force --reason</code>，并写入 <code>lock_changelog.md</code>。
+            这样，更换数据或评估器后的结果不会被当作同一基线的复现。
           </p>
-          <span class="why">为什么：防止换了数据或尺子，还叫“复现”。</span>
         </article>
 
         <article class="decision">
           <h3>模型只选工具名，参数由运行时注入</h3>
           <p>
-            LLM 不直接产生对话文本，也不抄写数据；它只输出“调用哪个工具”。
-            这样既保留模型对上下文的判断，又避免它把金额、编号、日期改写进输出。
+            面对批量合成数据，全量调用 LLM 检测并改写会放大 API 成本，因此设计目标是
+            先定位模块或场景切换处的问题轮次，再按需局部改写。当前 LLM 在决策循环中
+            只选择工具，参数由运行时注入，不直接生成或抄写对话文本，以减少输出 token，
+            并降低金额、编号、日期等字段被自由改写的风险。
           </p>
-          <span class="why">为什么：把“决策”和“数据搬运”分开，降低保真风险。</span>
         </article>
 
         <article class="decision">
-          <h3>先保真，再连贯，默认保住数据</h3>
+          <h3>未通过质量门禁，默认回退原文</h3>
           <p>
-            任一硬约束报错就 <code>fallback_keep</code> 回退原文；判官不可用记为
-            <code>C0_judge_error</code> 并同样回退，不静默放行；预算触顶则终止并标记
-            <code>stopped</code>，不产出未经验证的版本。
+            这里不接受静默放行：任一硬约束报错就 <code>fallback_keep</code> 回退原文；
+            判官不可用记为 <code>C0_judge_error</code> 并同样回退。后续接入局部改写后，
+            LLM 候选也必须通过保真与连贯性检查，未通过就不替换原文；预算触顶则终止并标记
+            <code>stopped</code>，不输出未经验证的候选。
           </p>
-          <span class="why">为什么：当前阶段先保证“不会改坏”，再谈“改得更好”。</span>
         </article>
 
         <article class="decision">
@@ -137,9 +148,8 @@
           <p>
             A4 首轮 D5 是 19/20：评测期间宿主机进入 Modern Standby 39 分钟，
             恢复后该条被墙钟预算中止。复核单条为 blocked。评测器现在把这类中止
-            计入独立的 <code>stopped</code> 字段，而不是算作模型漏检。
+            计入独立的 <code>stopped</code> 字段，避免将环境故障误判为模型漏检。
           </p>
-          <span class="why">为什么：环境噪声混进模型指标，会得出错误结论。</span>
         </article>
       </div>
 
@@ -150,25 +160,66 @@
       </p>
       <div class="figure">
         <table>
-          <caption class="small muted" style="text-align:left;padding-bottom:.5rem">A4 首轮因宿主待机导致 D5 为 19/20，复核后修正为 20/20；原始值保留在 <code>ablation_A4.raw.json</code>。</caption>
+          <caption class="small muted" style="text-align:left;padding-bottom:.5rem">A4 首轮因宿主待机导致 D5 为 19/20，复核后修正为
+            20/20；原始值保留在 <code>ablation_A4.raw.json</code>。</caption>
           <thead>
             <tr>
-              <th>臂</th><th>决策</th><th>D1</th><th>D2</th><th>D3</th>
-              <th>D4</th><th>D5</th><th>D6</th><th>误报</th><th>macro</th><th>tokens</th><th>成本</th>
+              <th>臂</th>
+              <th>决策</th>
+              <th>D1</th>
+              <th>D2</th>
+              <th>D3</th>
+              <th>D4</th>
+              <th>D5</th>
+              <th>D6</th>
+              <th>误报</th>
+              <th>macro</th>
+              <th>tokens</th>
+              <th>成本</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>A3</td><td>规则</td><td>0/20</td><td>20/20</td><td>20/20</td>
-              <td>20/20</td><td>20/20</td><td>20/20</td><td>0/12</td><td>83.3%</td><td>0</td><td>¥0.00</td>
+              <td>A3</td>
+              <td>规则</td>
+              <td>0/20</td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>0/12</td>
+              <td>83.3%</td>
+              <td>0</td>
+              <td>¥0.00</td>
             </tr>
             <tr>
-              <td>A3L</td><td>LLM</td><td>0/20</td><td>20/20</td><td>20/20</td>
-              <td>20/20</td><td>20/20</td><td>20/20</td><td>0/12</td><td>83.3%</td><td>251,561</td><td>¥0.40</td>
+              <td>A3L</td>
+              <td>LLM</td>
+              <td>0/20</td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>0/12</td>
+              <td>83.3%</td>
+              <td>251,561</td>
+              <td>¥0.40</td>
             </tr>
             <tr>
-              <td>A4</td><td>LLM + 判官</td><td><strong>20/20</strong></td><td>20/20</td><td>20/20</td>
-              <td>20/20</td><td>20/20</td><td>20/20</td><td>0/12</td><td><strong>100%</strong></td><td>305,910</td><td>¥0.55</td>
+              <td>A4</td>
+              <td>LLM + 判官</td>
+              <td><strong>20/20</strong></td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>0/12</td>
+              <td><strong>100%</strong></td>
+              <td>305,910</td>
+              <td>¥0.55</td>
             </tr>
           </tbody>
         </table>
@@ -186,20 +237,25 @@
       <h2>结果解读</h2>
       <ol>
         <li>
-          <strong>只换决策者（A3 → A3L）零增益，却多花 ¥0.40。</strong>
-          这套工具集上瓶颈不在“选哪个工具”，而在工具能力本身；
-          换更强的模型并不能替代缺失的检查能力。
+          <strong>决策策略消融（A3 → A3L）：检测指标不变，资源消耗增加。</strong>
+          两臂使用相同的确定性工具，仅将 <code>RulePolicy</code> 替换为 <code>LLMPolicy</code>。
+          宏观阻断率均为 83.3%；A3L 新增 346 次模型调用、251,561 tokens 和 ¥0.3987 成本。
+          在当前工具集和评测集上，仅替换决策策略未带来可观测的检测增量。
         </li>
         <li>
-          <strong>语义判官（A3L → A4）把 D1 从 0 拉到 20/20。</strong>
-          宏观阻断率 83.3% → 100%，增量成本 ¥0.15。
-          D1 的替换句结构完整、无新增实体、不复读，四项硬约束全部通过，
-          只有“这句话在回应什么”能发现。
+          <strong>评估器能力消融（A3L → A4）：语义判官覆盖 D1 答非所问。</strong>
+          A4 保持 LLM 决策策略不变，仅向 <code>check_coherence</code> 注入语义判官。
+          D1 阻断数从 0/20 提升至 20/20，宏观阻断率从 83.3% 提升至 100%，增量成本为 ¥0.15。
+          D1 注入仅替换单轮 assistant 的 content，R1–R5 和确定性 C1/C2 规则无法识别
+          跨话题语义；A4 通过 <code>C3_off_topic</code> 记录违规并触发回退。
         </li>
         <li>
-          <strong>成本是可核算的。</strong>
-          A4 跑完 132 条共 305,910 tokens、¥0.55，单条约 ¥0.0042；
-          A3 为 0 token。干净样本在三个臂上都是 0/12 误报。
+          <strong>质量、异常与成本分别统计。</strong>
+          <code>detected</code> 表示循环结束后存在违规记录，<code>blocked</code> 表示最终状态为
+          <code>fallback</code>；干净样本的 blocked 计为误报，<code>stopped</code> 和
+          <code>failed</code> 独立计数。三个臂的干净样本误报均为 0/12。
+          A4 在 132 条样本上记录 423 次调用、305,910 tokens 和 ¥0.5495 成本，
+          按样本量折合约 ¥0.0042/条。
         </li>
       </ol>
 
@@ -218,11 +274,29 @@ assistant : 请在十五分钟内完成支付，否则订单会自动关闭。</
       <p>Agent 的决策链（A4，live）如下：</p>
       <div class="figure">
         <table>
-          <thead><tr><th>步骤</th><th>动作</th><th>结果</th></tr></thead>
+          <thead>
+            <tr>
+              <th>步骤</th>
+              <th>动作</th>
+              <th>结果</th>
+            </tr>
+          </thead>
           <tbody>
-            <tr><td>1</td><td><code>check_consistency</code></td><td>通过：system / 结构 / 实体 / 说话人均未变</td></tr>
-            <tr><td>2</td><td><code>check_coherence</code></td><td>违规：<code>C3_off_topic @turn 2</code>，用户催单却回复要求支付</td></tr>
-            <tr><td>3</td><td><code>fallback_keep</code></td><td>回退原文，流程终止</td></tr>
+            <tr>
+              <td>1</td>
+              <td><code>check_consistency</code></td>
+              <td>通过：system / 结构 / 实体 / 说话人均未变</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><code>check_coherence</code></td>
+              <td>违规：<code>C3_off_topic @turn 2</code>，用户催单却回复要求支付</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><code>fallback_keep</code></td>
+              <td>回退原文，流程终止</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -265,7 +339,8 @@ assistant : 请在十五分钟内完成支付，否则订单会自动关闭。</
         公开代码不依赖上游工程；独立目录实测 353 passed / 5 skipped。
       </p>
       <p>
-        源码仓库：<a href="https://github.com/Soleil-gzm/dialogue-repair-agent">github.com/Soleil-gzm/dialogue-repair-agent</a>
+        源码仓库：<a
+          href="https://github.com/Soleil-gzm/dialogue-repair-agent">github.com/Soleil-gzm/dialogue-repair-agent</a>
       </p>
       <pre><code>python -m pip install -e ".[dev]"
 
