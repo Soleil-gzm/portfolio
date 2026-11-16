@@ -54,12 +54,12 @@
 
       <div class="stats" aria-label="关键事实">
         <div class="stat">
-          <div class="stat-value">166</div>
-          <div class="stat-label">输入目录中的 TXT 模板文件</div>
+          <div class="stat-value">4 种</div>
+          <div class="stat-label">可配置的特殊场景模块处理策略</div>
         </div>
         <div class="stat">
-          <div class="stat-value">8 × 6</div>
-          <div class="stat-label">单版本：阶段目录 × 客户类型</div>
+          <div class="stat-value">3 项</div>
+          <div class="stat-label">路径缓存一致性校验字段</div>
         </div>
         <div class="stat">
           <div class="stat-value">55</div>
@@ -67,8 +67,8 @@
         </div>
       </div>
       <p class="small muted">
-        统计口径（2026-11-16）：166 为输入模板根目录下递归清点的 <code>.txt</code> 文件数，
-        不含 4 个 Markdown 说明和 1 个 Excel；8 × 6 指单个版本的 8 个阶段目录、每阶段 6 类客户模板；
+        验证口径（2026-11-16）：4 种为已实现且可由配置切换的特殊场景模块处理策略；
+        3 项为路径缓存键中的 <code>seed</code>、<code>num_paths</code> 与 <code>prob_fingerprint</code>；
         55 为 <code>test_conditions_parser.py</code> 与 <code>test_descendant_chain.py</code>
         两个测试文件的合计通过数，已实际复跑，不代表项目全量测试。
       </p>
@@ -176,12 +176,12 @@
         </article>
       </div>
 
-      <h2>工程证据</h2>
+      <h2>工程验证</h2>
       <ul>
         <li>条件引擎 55 个测试通过（<code>PYTHONPATH=scripts_general</code>，覆盖条件解析与后代链）。</li>
         <li>缓存不匹配时输出 <code>seed</code> / <code>num_paths</code> / <code>fingerprint</code> 的具体差异原因。</li>
         <li>分片文件可断点恢复并合并；未替换占位符被视为致命错误，直接中止 worker。</li>
-        <li>输入模板根目录共清点 166 个 TXT 模板文件；单个版本按 8 个阶段目录组织，每阶段包含 6 类客户模板；输入侧另有 34 个模板/概率矩阵 Excel 样本。</li>
+        <li>输入数据在生成前进行规则校验，不符合要求时直接终止，避免异常数据进入批量生成流程。</li>
       </ul>
       <div class="callout">
         <span class="callout-title">测试口径</span>

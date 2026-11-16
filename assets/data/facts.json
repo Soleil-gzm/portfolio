@@ -60,18 +60,13 @@
     "visibility": "private",
     "python_files": 90,
     "python_lines": 13961,
-    "prompt_files": 166,
-    "excel_samples": 34,
     "condition_tests_passed": 55,
-    "stages": 8,
-    "customer_types": 6,
-    "pressure_strategies": 4,
+    "special_scenario_strategies": 4,
     "sources": [
       "../module_based_dialogue_synthesis/docs/architecture.md",
       "../module_based_dialogue_synthesis/docs/progress.md",
       "../module_based_dialogue_synthesis/scripts_general/core/generation/dialogue_builder.py",
-      "../module_based_dialogue_synthesis/scripts_general/core/conditions/parser.py",
-      "../module_based_dialogue_synthesis/scripts_general/core/pressure/pressure_manager.py"
+      "../module_based_dialogue_synthesis/scripts_general/core/conditions/parser.py"
     ]
   },
   "pipeline": {
