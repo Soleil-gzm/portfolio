@@ -249,6 +249,13 @@ tbody tr:hover {
   padding: clamp(3rem, 8vw, 5.5rem) 0 2.5rem;
 }
 
+.hero-subtitle {
+  margin-top: -0.25em;
+  color: var(--ink-soft);
+  font-size: clamp(1.2rem, 2.5vw, 1.55rem);
+  font-weight: 600;
+}
+
 .eyebrow {
   display: inline-flex;
   align-items: center;
