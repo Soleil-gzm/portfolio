@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>可控多轮对话生成引擎 | Portfolio</title>
-  <meta name="description" content="配置驱动的多轮对话生成：概率矩阵、条件解析、施压策略、缓存指纹与分片续跑。私有项目，仅展示架构与设计取舍。">
+  <meta name="description" content="配置驱动的多轮对话生成：概率矩阵、条件解析、特殊场景模块处理策略、缓存指纹与分片续跑。私有项目，仅展示架构与设计取舍。">
   <meta name="theme-color" content="#f7f5f0">
   <link rel="stylesheet" href="../../assets/css/site.css">
   <script src="../../assets/js/site.js" defer></script>
@@ -91,18 +91,18 @@
       </ul>
       <p>
         因此引擎把“生成什么”交给配置和概率矩阵，把“是否适用”交给结构化条件，
-        把“怎么施压、何时结束”交给可切换策略，并输出 trace 供分析。
+        把“特殊场景处理、对话结束”交给可切换模块与策略，并输出 trace 供分析。
       </p>
 
       <h2>架构</h2>
       <figure class="figure">
-        <img src="../../assets/img/generator-architecture.svg" alt="配置、概率矩阵与模板表经路径生成、条件筛选、施压和对话构建输出 JSON 与 trace；支持缓存指纹、分片续跑与统计报告。" loading="lazy">
+        <img src="../../assets/img/generator-architecture.svg" alt="配置、概率矩阵与模板表经路径生成、条件筛选、特殊场景模块处理和对话构建输出 JSON 与 trace；支持缓存指纹、分片续跑与统计报告。" loading="lazy">
         <figcaption>从配置与概率矩阵到 JSON + trace 的完整链路。</figcaption>
       </figure>
       <p>
         核心流程是：读取 <code>base + tasks</code> 配置 → 读取概率矩阵和模板表 →
         生成或复用路径 → 加载案例（占位数据与 system）→ 按条件筛选候选模板 →
-        插入施压片段 → 构造对话 → 输出 JSON 与 trace。
+        插入特殊场景模块片段 → 构造对话 → 输出 JSON 与 trace。
       </p>
 
       <h2>关键决策</h2>
@@ -136,13 +136,13 @@
         </article>
 
         <article class="decision">
-          <h3>施压策略可切换，而不是写死一条曲线</h3>
+          <h3>特殊场景模块处理策略可切换，而不是写死一条曲线</h3>
           <p>
             支持 <code>normalized</code>、<code>absolute</code>、<code>sigmoid</code>、
-            <code>linear_decay</code> 四种策略，由工厂按配置创建；施压片段沿
+            <code>linear_decay</code> 四种策略，由工厂按配置创建；特殊场景模块片段沿
             “祖先链 + 后代链”筛选，并受总次数上限约束。
           </p>
-          <span class="why">为什么：不同阶段的压力分布不同，单一曲线会把分布压成一种形状。</span>
+          <span class="why">为什么：不同阶段的特殊场景分布不同，单一处理策略难以覆盖各阶段需求。</span>
         </article>
 
         <article class="decision">
@@ -203,7 +203,7 @@ assistant : 已为您改到周四下午三点，稍后会发送确认短信。</
       <h2>我的工作</h2>
       <p>
         团队给出初始方向，我负责架构设计与主要实现：配置合并与概率表同步、条件解析器与原子条件体系、
-        路径生成与缓存指纹、施压策略接入、分片并行与续跑、trace 与分析。
+        路径生成与缓存指纹、特殊场景模块处理策略接入、分片并行与续跑、trace 与分析。
         项目规模约 90 个 Python 文件、13,961 行。
       </p>
 
