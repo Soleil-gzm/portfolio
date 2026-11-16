@@ -41,7 +41,7 @@
         <h1>可控多轮对话生成引擎</h1>
         <p class="lede">
           人工写对话覆盖不了条件组合，纯 LLM 生成又不可控、不可复现。
-          这个引擎把对话拆成“路径 + 条件 + 话术 + 施压”，
+          这个引擎把对话拆成“路径 + 条件 + 模板 + 施压”，
           让每条样本的生成过程可以被配置、复现和审计。
         </p>
         <div class="case-meta">
@@ -55,7 +55,7 @@
       <div class="stats" aria-label="关键事实">
         <div class="stat">
           <div class="stat-value">166</div>
-          <div class="stat-label">话术模板文件（三个版本）</div>
+          <div class="stat-label">对话模板文件（三个版本）</div>
         </div>
         <div class="stat">
           <div class="stat-value">8 × 6</div>
@@ -69,7 +69,7 @@
 
       <div class="callout warn">
         <span class="callout-title">公开展示边界</span>
-        项目代码、配置、话术模板和业务数据均不公开。本页只描述<strong>已实现的架构、设计取舍与可验证的工程事实</strong>，
+        项目代码、配置、对话模板和业务数据均不公开。本页只描述<strong>已实现的架构、设计取舍与可验证的工程事实</strong>，
         不含任何业务规则、客户信息或生产指标。
       </div>
 
@@ -90,12 +90,12 @@
 
       <h2>架构</h2>
       <figure class="figure">
-        <img src="../../assets/img/generator-architecture.svg" alt="配置、概率矩阵与话术表经路径生成、条件筛选、施压和对话构建输出 JSON 与 trace；支持缓存指纹、分片续跑与统计报告。" loading="lazy">
+        <img src="../../assets/img/generator-architecture.svg" alt="配置、概率矩阵与模板表经路径生成、条件筛选、施压和对话构建输出 JSON 与 trace；支持缓存指纹、分片续跑与统计报告。" loading="lazy">
         <figcaption>从配置与概率矩阵到 JSON + trace 的完整链路。</figcaption>
       </figure>
       <p>
-        核心流程是：读取 <code>base + tasks</code> 配置 → 读取概率矩阵和话术表 →
-        生成或复用路径 → 加载案例（占位数据与 system）→ 按条件筛选候选话术 →
+        核心流程是：读取 <code>base + tasks</code> 配置 → 读取概率矩阵和模板表 →
+        生成或复用路径 → 加载案例（占位数据与 system）→ 按条件筛选候选模板 →
         插入施压片段 → 构造对话 → 输出 JSON 与 trace。
       </p>
 
@@ -163,7 +163,7 @@
         <li>条件引擎 55 个测试通过（<code>PYTHONPATH=scripts_general</code>，覆盖条件解析与后代链）。</li>
         <li>缓存不匹配时输出 <code>seed</code> / <code>num_paths</code> / <code>fingerprint</code> 的具体差异原因。</li>
         <li>分片文件可断点恢复并合并；未替换占位符被视为致命错误，直接中止 worker。</li>
-        <li>话术模板按 8 个阶段 × 6 类客户组织，三个版本共 166 个模板文件；输入侧有 34 个话术/概率矩阵 Excel 样本。</li>
+        <li>对话模板按 8 个阶段 × 6 类客户组织，三个版本共 166 个模板文件；输入侧有 34 个模板/概率矩阵 Excel 样本。</li>
       </ul>
       <div class="callout">
         <span class="callout-title">测试口径</span>
@@ -173,7 +173,7 @@
 
       <h2>生成结构示意（虚构）</h2>
       <p class="small muted">
-        下面是一个完全虚构的中立域示例，只用于说明“路径 + 条件 + 话术”的组织方式，
+        下面是一个完全虚构的中立域示例，只用于说明“路径 + 条件 + 模板”的组织方式，
         不对应任何真实业务文本。
       </p>
       <pre><code>user      : 你好，我想把下周二的预约改到周四。
@@ -182,15 +182,16 @@ user      : 对，改到周四下午三点。
 assistant : 已为您改到周四下午三点，稍后会发送确认短信。</code></pre>
       <p class="small muted">
         对应结构：<code>身份确认 → 信息核对 → 变更确认 → 结束</code>；
-        每一步的候选话术受条件筛选，结束由再见概率控制。
+        每一步的候选模板受条件筛选，结束由再见概率控制。
       </p>
 
-      <h2>局限</h2>
+      <h2>局限与下一步</h2>
       <ul>
         <li><strong>条件语法有限。</strong>只支持 <code>&amp;</code> 与同族 <code>|</code>，不支持 <code>NOT</code> 和括号优先级。</li>
         <li><strong>没有端到端质量指标。</strong>引擎保证可控与可复现，不直接保证生成文本自然。</li>
-        <li><strong>依赖人工配置。</strong>概率矩阵和话术表的质量决定输出分布。</li>
+        <li><strong>依赖人工配置。</strong>概率矩阵和模板表的质量决定输出分布。</li>
         <li><strong>不可公开验证。</strong>代码与数据不公开，外部只能通过架构与工程事实判断。</li>
+        <li><strong>下一步。</strong>接入端到端质量评估（自然度与多样性），扩展条件语法，并与 Agent 的质量门控联动。</li>
       </ul>
 
       <h2>我的工作</h2>
