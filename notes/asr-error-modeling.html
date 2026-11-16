@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ASR 转录错误模式分析 | Portfolio</title>
+  <meta name="description" content="用语言模型 NLL 定位可疑句子与异常词，提取“前置词 → 异常词”噪声词表，供数据增强使用。私有项目，仅展示方法与取舍。">
+  <meta name="theme-color" content="#f7f5f0">
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script src="../assets/js/site.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+
+  <header class="site-header">
+    <div class="wrap-wide">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark" aria-hidden="true">GZ</span>
+        <span>LLM Agent · Data Quality</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="../index.html">首页</a>
+        <a href="../cases/agent/index.html">Agent</a>
+        <a href="../cases/generator/index.html">生成引擎</a>
+        <a href="../cases/pipeline/index.html">数据管线</a>
+        <a class="optional" href="asr-error-modeling.html">补充</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap">
+      <nav class="breadcrumb" aria-label="面包屑">
+        <a href="../index.html">首页</a>
+        <span aria-hidden="true">/</span>
+        <span>ASR 转录错误模式分析</span>
+      </nav>
+
+      <header class="case-hero">
+        <p class="eyebrow">Note 01 · ASR Error Modeling</p>
+        <h1>从转录错误里反推噪声词表</h1>
+        <p class="lede">
+          不知道 ASR 具体错在哪，就没法模拟它的错误。
+          这里用语言模型的负对数似然定位可疑句子和异常词，
+          最终产出一张带概率的“前置词 → 异常词”表，直接供增强使用。
+        </p>
+        <div class="case-meta">
+          <span>Private</span>
+          <span>Analysis</span>
+          <span>Python</span>
+          <span>NLL</span>
+        </div>
+      </header>
+
+      <div class="stats" aria-label="关键事实">
+        <div class="stat">
+          <div class="stat-value">6</div>
+          <div class="stat-label">脚本步骤：预处理 → 抽取噪声词对</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">Top 5%</div>
+          <div class="stat-label">按句子 NLL 百分位筛选可疑句</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">2,811</div>
+          <div class="stat-label">行 Python（27 个文件）</div>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <span class="callout-title">公开展示边界</span>
+        项目代码、原始转录文本与噪声词表均不公开。本页只描述<strong>方法、实现结构与取舍</strong>，
+        不展示任何真实对话内容或业务词表。
+      </div>
+
+      <h2>问题</h2>
+      <p>
+        要做 ASR 噪声增强，前提是知道真实 ASR 会犯什么错。人工标注成本高，
+        而且很难覆盖长尾；直接随机加噪声，又会造出模型根本不会犯的错误。
+        需要一种可批量执行、能落到具体词对上的分析方法。
+      </p>
+
+      <h2>方法</h2>
+      <p>
+        两条链路，先粗后细：
+      </p>
+      <ul>
+        <li><strong>句子级。</strong>清洗并抽取句子，用预训练语言模型计算 NLL，按百分位取最高的一批。</li>
+        <li><strong>词级。</strong>只对可疑句子逐词计算 NLL，定位高概率异常词，并记录它的前置词。</li>
+      </ul>
+      <p>
+        之后把“前置词 → 异常词”聚合成对，过滤纯数字、英文、乱码与姓名/称谓，
+        输出带出现概率的噪声词表。下游增强按这张表替换或插入，噪声形态因此来自真实转录错误，
+        而不是凭空构造。
+      </p>
+
+      <h2>关键决策</h2>
+      <div class="decisions">
+        <article class="decision">
+          <h3>先筛句子，再算词级 NLL</h3>
+          <p>
+            词级 NLL 的开销远高于句子级。先用句子级打分把范围缩到 5%，
+            再逐词计算，算力集中在最可能出错的文本上。
+          </p>
+          <span class="why">为什么：全量逐词打分成本不可接受，而随机抽样又会漏掉真正的错误。</span>
+        </article>
+
+        <article class="decision">
+          <h3>用百分位阈值，而不是硬编码绝对值</h3>
+          <p>
+            配置里取 <code>threshold_percentile: 95</code>，即 NLL 最高的 5%。
+            同时保留 <code>absolute_threshold</code> 作为可选覆盖。
+          </p>
+          <span class="why">为什么：不同批次、不同领域的 NLL 分布不同，固定阈值会让某一批几乎选不出句子。</span>
+        </article>
+
+        <article class="decision">
+          <h3>采样比例与随机种子都可配置</h3>
+          <p>
+            句子级计算支持 <code>sample_ratio</code>，并固定 <code>sample_seed</code>；
+            当前配置采样 10% 做试验，重跑结果一致。
+          </p>
+          <span class="why">为什么：调参阶段需要快速迭代，但结论必须可复现。</span>
+        </article>
+
+        <article class="decision">
+          <h3>过滤规则和统计分开</h3>
+          <p>
+            噪声词对提取之后单独做清洗：纯数字对、英文片段、姓名/称谓前置词都可以按开关剔除，
+            统计报告另外生成。
+          </p>
+          <span class="why">为什么：过滤标准会随数据变化，混在提取逻辑里会导致每次改规则都要动主流程。</span>
+        </article>
+
+        <article class="decision">
+          <h3>断点续跑沿用文件标记</h3>
+          <p>
+            每个步骤完成后写 <code>.step_*_done</code>，<code>resume: true</code> 时跳过；
+            需要强制重跑就删掉对应标记。
+          </p>
+          <span class="why">为什么：NLL 计算是长任务，中断后重算整条链路代价太高。</span>
+        </article>
+      </div>
+
+      <h2>与主流水线的连接</h2>
+      <p>
+        这张噪声词表不是终点。后续预处理脚本把词表转成拼音串与语义向量并缓存为
+        <code>.pkl</code>，清洗增强流水线里的 <code>asr_noise</code> 增强器再据此做替换：
+        拼音相似度按编辑距离归一化，语义相似度用余弦，两路加权。
+        于是“分析错误模式”和“制造同类噪声”形成了闭环。
+      </p>
+
+      <h2>局限</h2>
+      <ul>
+        <li><strong>NLL 不是错误标签。</strong>高 NLL 只说明模型觉得意外，可能是错字，也可能是生僻表达。</li>
+        <li><strong>百分位必然选出固定比例。</strong>即使整批数据都很干净，也会选出 5%。</li>
+        <li><strong>试验配置只跑了 10%。</strong>当前配置是采样试验口径，不等于全量结论。</li>
+        <li><strong>领域相关。</strong>过滤规则和词表都绑定具体数据，换领域需要重跑。</li>
+      </ul>
+
+      <h2>我的工作</h2>
+      <p>
+        我实现了预处理与句子抽取、句子级与词级 NLL 计算、百分位筛选、
+        前置词-异常词对提取与过滤、统计报告，以及断点续跑的任务隔离结构。
+      </p>
+
+      <div class="next-prev">
+        <a href="../cases/pipeline/index.html">
+          <span class="label">Prev</span>← 数据管线案例
+        </a>
+        <a href="intent-clustering.html">
+          <span class="label">Next</span>12 万条意图如何变成可管理的簇 →
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap-wide">
+      <span>© 2026 GUO Zimeng · 作品集内容依据实际项目事实整理</span>
+      <div class="footer-links">
+        <a href="../index.html">首页</a>
+        <a href="../cases/agent/index.html">主案例</a>
+        <a href="intent-clustering.html">意图聚类</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>意图句向量聚类 | Portfolio</title>
+  <meta name="description" content="12 万条用户意图经清洗、text2vec 向量化、PCA 降维与 K-means 聚类，输出可浏览的主题簇。私有项目，仅展示方法与取舍。">
+  <meta name="theme-color" content="#f7f5f0">
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script src="../assets/js/site.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+
+  <header class="site-header">
+    <div class="wrap-wide">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark" aria-hidden="true">GZ</span>
+        <span>LLM Agent · Data Quality</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="../index.html">首页</a>
+        <a href="../cases/agent/index.html">Agent</a>
+        <a href="../cases/generator/index.html">生成引擎</a>
+        <a href="../cases/pipeline/index.html">数据管线</a>
+        <a class="optional" href="asr-error-modeling.html">补充</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap">
+      <nav class="breadcrumb" aria-label="面包屑">
+        <a href="../index.html">首页</a>
+        <span aria-hidden="true">/</span>
+        <span>意图句向量聚类</span>
+      </nav>
+
+      <header class="case-hero">
+        <p class="eyebrow">Note 02 · Intent Clustering</p>
+        <h1>12 万条意图如何变成可管理的簇</h1>
+        <p class="lede">
+          意图文本太多，人工看不完；按关键词分组，又抓不住同义表达。
+          这里用句向量加 K-means，把海量意图压成数百个可浏览的主题簇，
+          供后续抽样、命名和训练使用。
+        </p>
+        <div class="case-meta">
+          <span>Private</span>
+          <span>Analysis</span>
+          <span>Python</span>
+          <span>K-means</span>
+        </div>
+      </header>
+
+      <div class="stats" aria-label="关键事实">
+        <div class="stat">
+          <div class="stat-value">126,241</div>
+          <div class="stat-label">输入意图条数</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">125,964</div>
+          <div class="stat-label">清洗后参与聚类的条数</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">4 组 K</div>
+          <div class="stat-label">250 / 500 / 750 / 1000 对比</div>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <span class="callout-title">公开展示边界</span>
+        项目代码、原始意图文本与聚类结果均不公开。本页只描述<strong>方法、工程结构与局限</strong>，
+        不展示真实用户语句或业务簇名。
+      </div>
+
+      <h2>问题</h2>
+      <p>
+        意图数据是短文本，同义表达多、用词不稳定。用关键词或规则分组，
+        维护成本会随表达方式增长；而完全不分组，又无法抽样检查覆盖情况。
+        目标不是得到“语义上绝对正确”的分类，而是得到一组可管理、可浏览、可继续人工命名的簇。
+      </p>
+
+      <h2>方法</h2>
+      <p>
+        链路是：清洗 → 句向量 → PCA 降维 → K-means → 分析与可视化。
+      </p>
+      <ul>
+        <li><strong>清洗。</strong>用 Data-Juicer 的规则配置过滤长度、语言与无效文本。</li>
+        <li><strong>向量化。</strong>用中文句向量模型把每条意图编码成定长向量。</li>
+        <li><strong>降维。</strong>先做 PCA，再进入聚类，控制内存与距离计算开销。</li>
+        <li><strong>聚类。</strong>K-means 支持多组 K，另用肘部法则辅助选值。</li>
+        <li><strong>分析。</strong>输出带标签的 CSV、簇汇总、UMAP 散点图和可折叠的 HTML 簇视图。</li>
+      </ul>
+
+      <h2>关键决策</h2>
+      <div class="decisions">
+        <article class="decision">
+          <h3>用句向量，而不是关键词表</h3>
+          <p>
+            同一意图会有多种说法，关键词只能覆盖写出来的词。
+            句向量把“意思接近”变成“距离接近”，减少人工维护同义词表的工作。
+          </p>
+          <span class="why">为什么：意图数据的长尾在表达方式上，不在词表覆盖上。</span>
+        </article>
+
+        <article class="decision">
+          <h3>先 PCA 降维，再聚类</h3>
+          <p>
+            原始向量维度高，直接做距离计算既慢又占内存。
+            PCA 降维后的向量单独保存，聚类可以反复调 K，不必重复编码。
+          </p>
+          <span class="why">为什么：向量化是整条链路最贵的一步，必须和调参解耦。</span>
+        </article>
+
+        <article class="decision">
+          <h3>不预设唯一 K，保留多组结果</h3>
+          <p>
+            250 / 500 / 750 / 1000 分别输出到独立目录，配合肘部曲线比较；
+            也可以手动指定 K 重跑。
+          </p>
+          <span class="why">为什么：K 的选择取决于下游怎么用，聚类指标无法单独决定。</span>
+        </article>
+
+        <article class="decision">
+          <h3>结果要能被人快速浏览</h3>
+          <p>
+            除 CSV 外，额外生成可折叠的簇视图和交互式散点图：
+            先看簇大小和代表文本，再决定是否深入。
+          </p>
+          <span class="why">为什么：聚类只是中间产物，真正的判断仍然需要人看样本。</span>
+        </article>
+      </div>
+
+      <h2>结果与解读</h2>
+      <p>
+        126,241 条输入中，125,964 条进入聚类，清洗阶段剔除 277 条（约 0.22%）。
+        四组 K 的轮廓系数在 <strong>0.0545–0.0586</strong> 之间。
+      </p>
+      <p>
+        这个数值不高，说明簇之间没有清晰的几何边界。对短文本意图来说这很常见：
+        很多句子本身语义就介于两类之间。因此这些簇的定位是<strong>抽样与组织结构</strong>，
+        不是自动分类器；簇名仍需要人工确认。
+      </p>
+
+      <h2>局限</h2>
+      <ul>
+        <li><strong>轮廓系数低。</strong>0.05 量级意味着簇边界模糊，不能当作语义分类准确率。</li>
+        <li><strong>K-means 假设球形簇。</strong>对长尾、层级式意图结构不友好。</li>
+        <li><strong>K 值靠人判断。</strong>肘部法则只提供参考，最终取决于下游用途。</li>
+        <li><strong>簇仍需人工命名。</strong>代表文本只能加速浏览，不能替代理解。</li>
+      </ul>
+
+      <h2>我的工作</h2>
+      <p>
+        我实现了清洗配置与执行、句向量生成与 PCA 降维、多 K 的 K-means 聚类、
+        肘部法则评估脚本，以及簇汇总、UMAP 散点图与 HTML 簇视图。
+      </p>
+
+      <div class="next-prev">
+        <a href="asr-error-modeling.html">
+          <span class="label">Prev</span>← ASR 转录错误模式分析
+        </a>
+        <a href="../cases/agent/index.html">
+          <span class="label">Next</span>回到主案例：对话数据修复 Agent →
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap-wide">
+      <span>© 2026 GUO Zimeng · 作品集内容依据实际项目事实整理</span>
+      <div class="footer-links">
+        <a href="../index.html">首页</a>
+        <a href="../cases/agent/index.html">主案例</a>
+        <a href="asr-error-modeling.html">ASR 错误建模</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
