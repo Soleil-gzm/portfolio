@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>对话数据修复 Agent | Portfolio</title>
+  <meta name="description" content="可插拔的对话质量 Agent：6 类缺陷检测、保真约束、语义判官、三臂消融、四元组基线指纹与成本账本。">
+  <meta name="theme-color" content="#f7f5f0">
+  <link rel="stylesheet" href="../../assets/css/site.css">
+  <script src="../../assets/js/site.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+
+  <header class="site-header">
+    <div class="wrap-wide">
+      <a class="brand" href="../../index.html">
+        <span class="brand-mark" aria-hidden="true">GZ</span>
+        <span>LLM Agent · Data Quality</span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="../../index.html">首页</a>
+        <a href="index.html">Agent</a>
+        <a href="../generator/index.html">生成引擎</a>
+        <a href="../pipeline/index.html">数据管线</a>
+        <a class="optional" href="../../notes/asr-error-modeling.html">补充</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap">
+      <nav class="breadcrumb" aria-label="面包屑">
+        <a href="../../index.html">首页</a>
+        <span aria-hidden="true">/</span>
+        <span>对话数据修复 Agent</span>
+      </nav>
+
+      <header class="case-hero">
+        <p class="eyebrow">Case 01 · Agent</p>
+        <h1>对话数据修复 Agent</h1>
+        <p class="lede">
+          在动手改数据之前，先把“怎么算改好了”定义清楚。
+          这是一个可插拔的对话质量组件：检测跨轮断裂，优先保住原文，
+          并用可复现的对照臂、Trace 与成本账本证明每一步决策。
+        </p>
+        <div class="case-meta">
+          <span>Open source slice</span>
+          <span>Apache-2.0</span>
+          <span>Python ≥ 3.10</span>
+          <span>Synthetic data</span>
+          <span>Stage: detect + fallback</span>
+        </div>
+      </header>
+
+      <div class="stats" aria-label="关键结果">
+        <div class="stat">
+          <div class="stat-value">100%</div>
+          <div class="stat-label">A4 宏观阻断率（120 条缺陷）</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">0/12</div>
+          <div class="stat-label">干净样本误报</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">353</div>
+          <div class="stat-label">开源切片测试通过（5 skipped）</div>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <span class="callout-title">先读边界</span>
+        当前版本做<strong>检测 + 回退</strong>，不做重写；重写工具只留了接口。
+        评测数据是<strong>程序化合成缺陷</strong>（中立域：订单售后回访），不是真实生产缺陷。
+        所有数字都是在 120 条缺陷 + 12 条干净样本上的单次运行结果。
+      </div>
+
+      <h2>问题与约束</h2>
+      <p>
+        模板拼接生成的对话通常“局部通顺、全局不连贯”：每一句都像人话，但上下轮接不上。
+        直接让 LLM 重写会遇到三个问题：
+      </p>
+      <ul>
+        <li><strong>改坏了没人知道</strong>：金额、日期、承诺被改写，结构被打乱。</li>
+        <li><strong>改好了没人证明</strong>：没有基线、没有对照，&ldquo;感觉更顺了&rdquo;不是结论。</li>
+        <li><strong>成本说不清</strong>：不知道多花的 token 换来了多少质量增量。</li>
+      </ul>
+      <p>
+        所以这个项目先解决后两条：先把评测口径、基线、对照臂和成本计量搭起来，
+        再决定是否让模型动数据。
+      </p>
+
+      <h2>架构</h2>
+      <figure class="figure">
+        <img src="../../assets/img/agent-architecture.svg" alt="受损对话经适配器进入决策循环，循环调用一致性、连贯性与回退工具，输出原文或候选，并记录 Trace 与 token 账本；基线锁由四元组指纹构成。" loading="lazy">
+        <figcaption>运行时由决策循环、工具层、可观测性与基线锁四部分组成。</figcaption>
+      </figure>
+      <p>
+        循环里模型只负责选择工具，工具参数由运行时注入；工具返回结果决定下一步，
+        直到命中终止工具或预算触顶。所有决策写入 Trace，所有 token 写入 append-only 账本，
+        成本按版本化价格表计算。
+      </p>
+
+      <h2>关键决策</h2>
+      <div class="decisions">
+        <article class="decision">
+          <h3>基线是一组指纹，不是一次结果</h3>
+          <p>
+            基线由输入、配置、评估器、适配四个指纹组成。任一变化都会让“复现”失效，
+            因此 <code>baseline_lock.json</code> 一经生成不可静默覆盖；变更必须
+            <code>--force --reason</code>，并写入 <code>lock_changelog.md</code>。
+          </p>
+          <span class="why">为什么：防止换了数据或尺子，还叫“复现”。</span>
+        </article>
+
+        <article class="decision">
+          <h3>模型只选工具名，参数由运行时注入</h3>
+          <p>
+            LLM 不直接产生对话文本，也不抄写数据；它只输出“调用哪个工具”。
+            这样既保留模型对上下文的判断，又避免它把金额、编号、日期改写进输出。
+          </p>
+          <span class="why">为什么：把“决策”和“数据搬运”分开，降低保真风险。</span>
+        </article>
+
+        <article class="decision">
+          <h3>先保真，再连贯，默认保住数据</h3>
+          <p>
+            任一硬约束报错就 <code>fallback_keep</code> 回退原文；判官不可用记为
+            <code>C0_judge_error</code> 并同样回退，不静默放行；预算触顶则终止并标记
+            <code>stopped</code>，不产出未经验证的版本。
+          </p>
+          <span class="why">为什么：当前阶段先保证“不会改坏”，再谈“改得更好”。</span>
+        </article>
+
+        <article class="decision">
+          <h3>把“没检出”和“被环境打断”分开</h3>
+          <p>
+            A4 首轮 D5 是 19/20：评测期间宿主机进入 Modern Standby 39 分钟，
+            恢复后该条被墙钟预算中止。复核单条为 blocked。评测器现在把这类中止
+            计入独立的 <code>stopped</code> 字段，而不是算作模型漏检。
+          </p>
+          <span class="why">为什么：环境噪声混进模型指标，会得出错误结论。</span>
+        </article>
+      </div>
+
+      <h2>评测设计</h2>
+      <p>
+        缺陷集包含 6 类各 20 条，加 12 条干净样本。三个臂按单变量原则设计：
+        A3 规则决策；A3L 换成 LLM function calling，工具不变；A4 在 A3L 基础上加语义判官。
+      </p>
+      <div class="figure">
+        <table>
+          <caption class="small muted" style="text-align:left;padding-bottom:.5rem">A4 首轮因宿主待机导致 D5 为 19/20，复核后修正为 20/20；原始值保留在 <code>ablation_A4.raw.json</code>。</caption>
+          <thead>
+            <tr>
+              <th>臂</th><th>决策</th><th>D1</th><th>D2</th><th>D3</th>
+              <th>D4</th><th>D5</th><th>D6</th><th>误报</th><th>macro</th><th>tokens</th><th>成本</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>A3</td><td>规则</td><td>0/20</td><td>20/20</td><td>20/20</td>
+              <td>20/20</td><td>20/20</td><td>20/20</td><td>0/12</td><td>83.3%</td><td>0</td><td>¥0.00</td>
+            </tr>
+            <tr>
+              <td>A3L</td><td>LLM</td><td>0/20</td><td>20/20</td><td>20/20</td>
+              <td>20/20</td><td>20/20</td><td>20/20</td><td>0/12</td><td>83.3%</td><td>251,561</td><td>¥0.40</td>
+            </tr>
+            <tr>
+              <td>A4</td><td>LLM + 判官</td><td><strong>20/20</strong></td><td>20/20</td><td>20/20</td>
+              <td>20/20</td><td>20/20</td><td>20/20</td><td>0/12</td><td><strong>100%</strong></td><td>305,910</td><td>¥0.55</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">
+        D1 答非所问 · D2 指代断裂 · D3 事实冲突 · D4 角色混淆 · D5 重复空转 · D6 缺失承接。
+        成本按 append-only token 账本与版本化价格表计算。
+      </p>
+
+      <figure class="figure">
+        <img src="../../assets/img/01_ablation.svg" alt="三个评测臂的宏观阻断率与成本对比柱状图" loading="lazy">
+        <figcaption>A3 与 A3L 宏观阻断率相同，A4 增加语义判官后达到 100%。</figcaption>
+      </figure>
+
+      <h2>结果解读</h2>
+      <ol>
+        <li>
+          <strong>只换决策者（A3 → A3L）零增益，却多花 ¥0.40。</strong>
+          这套工具集上瓶颈不在“选哪个工具”，而在工具能力本身；
+          换更强的模型并不能替代缺失的检查能力。
+        </li>
+        <li>
+          <strong>语义判官（A3L → A4）把 D1 从 0 拉到 20/20。</strong>
+          宏观阻断率 83.3% → 100%，增量成本 ¥0.15。
+          D1 的替换句结构完整、无新增实体、不复读，四项硬约束全部通过，
+          只有“这句话在回应什么”能发现。
+        </li>
+        <li>
+          <strong>成本是可核算的。</strong>
+          A4 跑完 132 条共 305,910 tokens、¥0.55，单条约 ¥0.0042；
+          A3 为 0 token。干净样本在三个臂上都是 0/12 误报。
+        </li>
+      </ol>
+
+      <figure class="figure">
+        <img src="../../assets/img/02_heatmap.svg" alt="六类缺陷在三个评测臂上的拦截热力图" loading="lazy">
+        <figcaption>语义判官的增量集中在 D1；其余五类由确定性规则覆盖。</figcaption>
+      </figure>
+
+      <h2>失败案例：为什么必须看语义</h2>
+      <p>
+        下面是公开轨中的一个 D1 案例。注入缺陷时只把第 2 轮回复换成跨话题内容，
+        句子本身没有任何结构和实体问题。
+      </p>
+      <pre><code>user      : 已经等很久了，麻烦帮我催一下。（订单号 ORD-556516）
+assistant : 请在十五分钟内完成支付，否则订单会自动关闭。</code></pre>
+      <p>Agent 的决策链（A4，live）如下：</p>
+      <div class="figure">
+        <table>
+          <thead><tr><th>步骤</th><th>动作</th><th>结果</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><code>check_consistency</code></td><td>通过：system / 结构 / 实体 / 说话人均未变</td></tr>
+            <tr><td>2</td><td><code>check_coherence</code></td><td>违规：<code>C3_off_topic @turn 2</code>，用户催单却回复要求支付</td></tr>
+            <tr><td>3</td><td><code>fallback_keep</code></td><td>回退原文，流程终止</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>{"seq": 4, "t_ms": 2219, "event": "decide", "key": "a932e46ea4f5bbab", "action": "call_tool", "tool": "check_coherence", "reason": "保真校验已通过（check_consistency: ok）。按流程继续做连贯性校验。"}
+{"seq": 5, "t_ms": 3891, "event": "tool_result", "key": "a932e46ea4f5bbab", "tool": "check_coherence", "ok": false, "terminal": false, "latency_ms": 1671, "tokens": 673}
+{"seq": 6, "t_ms": 5219, "event": "decide", "key": "a932e46ea4f5bbab", "action": "call_tool", "tool": "fallback_keep", "reason": "校验结果：保真校验通过；连贯性校验发现 1 处违规（C3_off_topic @turn 2，用户催单却回复要求支付，答非所问）。按规则不尝试改写，直接兜底保留原文。"}
+{"seq": 7, "t_ms": 5219, "event": "tool_result", "key": "a932e46ea4f5bbab", "tool": "fallback_keep", "ok": true, "terminal": true, "latency_ms": 0, "tokens": 0}
+{"seq": 8, "t_ms": 5219, "event": "end", "key": "a932e46ea4f5bbab", "status": "fallback", "termination": "tool_terminal"}</code></pre>
+      <p class="small muted">
+        Trace 原文见 <a href="../../assets/agent/04_trace_sample.jsonl">04_trace_sample.jsonl</a>；
+        完整前后对照见 <a href="../../assets/agent/05_before_after.md">05_before_after.md</a>。
+      </p>
+
+      <figure class="figure">
+        <img src="../../assets/img/03_trace_timeline.svg" alt="一次 Agent 决策的 Trace 时间线" loading="lazy">
+        <figcaption>一次完整决策：一致性检查 → 连贯性检查 → 回退，约 5.2 秒。</figcaption>
+      </figure>
+
+      <h2>局限与下一步</h2>
+      <ul>
+        <li><strong>只做检测与回退。</strong>重写工具只留接口；当前不声称提升对话质量，只声称阻止坏数据通过。</li>
+        <li><strong>合成缺陷。</strong>6 类缺陷是程序化注入，不能直接外推到真实生产分布。</li>
+        <li><strong>单模型、单次运行、小样本。</strong>只测了 <code>deepseek-flash</code>，没有多模型对比与置信区间。</li>
+        <li><strong>计时不可用。</strong>评测期间发生宿主待机，耗时数据被污染，因此不作为指标。</li>
+        <li><strong>缺下游收益。</strong>尚未验证修复后的数据能否提升下游模型。</li>
+      </ul>
+      <p>
+        下一步按价值排序：完成重写工具与修复指标 → 在自然对话底座上做半合成缺陷与人工盲评
+        → 用同一训练配置验证下游收益。
+      </p>
+
+      <h2>我的工作与复现</h2>
+      <p>
+        该 Agent 由我独立设计并实现：运行时（决策循环、工具注册表、预算、Trace、checkpoint、
+        token 账本）、评测（硬约束、实体抽取、连贯性、语义判官）、基准（四元组指纹、不可变锁、
+        缺陷注入、三臂对照、报告生成）以及开源清单与边界测试。
+      </p>
+      <p>
+        开源切片按 <code>oss_manifest.txt</code> 导出，发布文件不含业务标识，
+        公开代码不依赖上游工程；独立目录实测 353 passed / 5 skipped。
+      </p>
+      <pre><code>python -m pip install -e ".[dev]"
+
+# 同 seed 生成同数据
+python -m agent.benchmark.fixtures --n 12 --seed 20261112
+
+# 离线复现 A0 基线指纹
+python -m agent.benchmark.run \
+  --input agent/fixtures/public/base_v1.json \
+  --arms A0 --verify-arm A0
+
+# 离线评测 A3；A3L / A4 需要 DEEPSEEK_API_KEY，会消耗 token
+python -m agent.benchmark.agent_eval --arm A3 --out agent/benchmark/output/ablation_A3.json
+
+python -m pytest</code></pre>
+      <p class="small muted">
+        完整数据与结论：
+        <a href="../../assets/agent/benchmark_report.html">HTML 报告</a> ·
+        <a href="../../assets/agent/benchmark_report.md">Markdown</a> ·
+        <a href="../../assets/agent/benchmark_report.json">JSON</a>
+      </p>
+
+      <div class="next-prev">
+        <a href="../../index.html">
+          <span class="label">Back</span>首页
+        </a>
+        <a href="../generator/index.html">
+          <span class="label">Next</span>可控多轮对话生成引擎 →
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap-wide">
+      <span>© 2026 GUO Zimeng · 作品集内容依据实际项目事实整理</span>
+      <div class="footer-links">
+        <a href="../../index.html">首页</a>
+        <a href="../generator/index.html">生成引擎</a>
+        <a href="../pipeline/index.html">数据管线</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{"seq": 1, "t_ms": 0, "event": "start", "key": "a932e46ea4f5bbab"}
+{"seq": 2, "t_ms": 1358, "event": "decide", "key": "a932e46ea4f5bbab", "action": "call_tool", "tool": "check_consistency", "reason": "LLM 选择 check_consistency"}
+{"seq": 3, "t_ms": 1358, "event": "tool_result", "key": "a932e46ea4f5bbab", "tool": "check_consistency", "ok": true, "terminal": false, "latency_ms": 0, "tokens": 0}
+{"seq": 4, "t_ms": 2219, "event": "decide", "key": "a932e46ea4f5bbab", "action": "call_tool", "tool": "check_coherence", "reason": "保真校验已通过（check_consistency: ok）。按流程继续做连贯性校验。"}
+{"seq": 5, "t_ms": 3891, "event": "tool_result", "key": "a932e46ea4f5bbab", "tool": "check_coherence", "ok": false, "terminal": false, "latency_ms": 1671, "tokens": 673}
+{"seq": 6, "t_ms": 5219, "event": "decide", "key": "a932e46ea4f5bbab", "action": "call_tool", "tool": "fallback_keep", "reason": "校验结果：保真校验通过；连贯性校验发现 1 处违规（C3_off_topic @turn 2，用户催单却回复要求支付，答非所问）。按规则不尝试改写，直接兜底保留原文。"}
+{"seq": 7, "t_ms": 5219, "event": "tool_result", "key": "a932e46ea4f5bbab", "tool": "fallback_keep", "ok": true, "terminal": true, "latency_ms": 0, "tokens": 0}
+{"seq": 8, "t_ms": 5219, "event": "end", "key": "a932e46ea4f5bbab", "status": "fallback", "termination": "tool_terminal"}

@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 430" role="img" aria-labelledby="title desc">
+  <title id="title">对话修复 Agent 运行时架构</title>
+  <desc id="desc">受损对话经适配器进入决策循环，循环调用三个工具，输出候选或回退原文，并记录 Trace 与 token 账本；基线锁由四元组指纹构成。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7b8088"/>
+    </marker>
+    <style>
+      .box { fill: #fffefb; stroke: #ded9cf; stroke-width: 1.2; }
+      .box-accent { fill: #e3efec; stroke: #0f6b5f; stroke-width: 1.2; }
+      .t { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", sans-serif; fill: #17181a; }
+      .k { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill: #0f6b5f; }
+      .m { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", sans-serif; fill: #7b8088; }
+      .line { stroke: #7b8088; stroke-width: 1.2; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #c7c0b3; stroke-width: 1.1; stroke-dasharray: 4 4; fill: none; }
+    </style>
+  </defs>
+
+  <text x="24" y="30" class="k" font-size="11" letter-spacing="1.5">RUNTIME</text>
+  <text x="24" y="52" class="t" font-size="18" font-weight="700">决策循环与工具约束</text>
+
+  <!-- input -->
+  <rect class="box" x="24" y="110" width="150" height="104" rx="8"/>
+  <text x="40" y="140" class="k" font-size="11">INPUT</text>
+  <text x="40" y="164" class="t" font-size="13">受损对话</text>
+  <text x="40" y="186" class="m" font-size="12">候选 + 原文 + 配置</text>
+
+  <!-- adapter -->
+  <rect class="box" x="206" y="110" width="150" height="104" rx="8"/>
+  <text x="222" y="140" class="k" font-size="11">ADAPTER</text>
+  <text x="222" y="164" class="t" font-size="13">格式适配</text>
+  <text x="222" y="186" class="m" font-size="12">schema / 域配置</text>
+
+  <!-- loop -->
+  <rect class="box-accent" x="388" y="96" width="214" height="132" rx="8"/>
+  <text x="404" y="126" class="k" font-size="11">LOOP</text>
+  <text x="404" y="150" class="t" font-size="14" font-weight="700">决策循环</text>
+  <text x="404" y="174" class="m" font-size="12">规则策略 / LLM function calling</text>
+  <text x="404" y="196" class="m" font-size="12">预算 · 死循环识别 · 终止原因</text>
+  <text x="404" y="216" class="m" font-size="12">模型只选工具，参数由运行时注入</text>
+
+  <!-- tools -->
+  <rect class="box" x="634" y="86" width="222" height="152" rx="8"/>
+  <text x="650" y="112" class="k" font-size="11">TOOLS</text>
+  <rect x="650" y="124" width="190" height="30" rx="5" fill="#f7f5f0" stroke="#ded9cf"/>
+  <text x="662" y="144" class="t" font-size="12">check_consistency</text>
+  <rect x="650" y="162" width="190" height="30" rx="5" fill="#f7f5f0" stroke="#ded9cf"/>
+  <text x="662" y="182" class="t" font-size="12">check_coherence</text>
+  <rect x="650" y="200" width="190" height="30" rx="5" fill="#f7f5f0" stroke="#ded9cf"/>
+  <text x="662" y="220" class="t" font-size="12">fallback_keep</text>
+
+  <!-- output -->
+  <rect class="box" x="888" y="110" width="168" height="104" rx="8"/>
+  <text x="904" y="140" class="k" font-size="11">OUTPUT</text>
+  <text x="904" y="164" class="t" font-size="13">原文 / 候选</text>
+  <text x="904" y="186" class="m" font-size="12">+ Trace + 账本</text>
+
+  <!-- arrows -->
+  <line class="line" x1="174" y1="162" x2="200" y2="162"/>
+  <line class="line" x1="356" y1="162" x2="382" y2="162"/>
+  <line class="line" x1="602" y1="162" x2="628" y2="162"/>
+  <line class="line" x1="856" y1="162" x2="882" y2="162"/>
+
+  <!-- sidecar -->
+  <rect class="box" x="388" y="256" width="468" height="52" rx="8"/>
+  <text x="404" y="278" class="k" font-size="11">OBSERVABILITY</text>
+  <text x="404" y="297" class="m" font-size="12">Trace（start / decide / tool_result / end）· token 账本（append-only）· checkpoint</text>
+
+  <!-- lock -->
+  <rect class="box" x="206" y="330" width="700" height="62" rx="8"/>
+  <text x="222" y="354" class="k" font-size="11">BASELINE LOCK · 四元组指纹</text>
+  <text x="222" y="376" class="m" font-size="12">输入指纹（sha256 + 记录数 + seed） · 配置指纹 · 评估器指纹 · 适配指纹——一经生成不可静默覆盖</text>
+
+  <!-- dashed links -->
+  <path class="dash" d="M495,228 L495,254"/>
+  <path class="dash" d="M495,308 L495,328"/>
+</svg>

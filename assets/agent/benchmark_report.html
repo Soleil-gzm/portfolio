@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>对话数据修复 Agent：可复现评测</title>
+<style>
+body{margin:0;background:#f8f9fa;color:#212529;font-family:"Segoe UI","Noto Sans SC",sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:32px 20px 64px}
+h1{font-size:26px;margin:0 0 6px} h2{font-size:17px;margin:32px 0 12px}
+.muted{color:#868e96;font-size:12px;font-weight:400}
+.lead{color:#495057;font-size:14px;line-height:1.8}
+.card{background:#fff;border:1px solid #e9ecef;border-radius:10px;padding:18px;margin-top:14px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid #f1f3f5;padding:8px 6px;text-align:center}
+th{color:#868e96;font-weight:500;font-size:12px}
+td:first-child,th:first-child{text-align:left}
+svg{max-width:100%;height:auto}
+ol{line-height:1.9;font-size:14px;padding-left:20px}
+code{background:#f1f3f5;padding:1px 5px;border-radius:4px;font-size:12px}
+pre{background:#212529;color:#f8f9fa;padding:14px;border-radius:8px;overflow:auto;font-size:12px;line-height:1.7}
+</style></head><body><div class="wrap">
+<h1>对话数据修复 Agent：可复现评测</h1>
+<p class="muted">缺陷集 120 条（6 类 × 20）
+· 干净样本 12 条 · 指标口径：blocked = 检出并回退原文</p>
+<p class="lead">目标不是"感觉改得更顺了"，而是在固定缺陷集上量化"能不能发现问题、能不能挡住问题、花多少钱"。</p>
+
+<h2>1. 消融：效果与成本</h2>
+<div class="card"><svg xmlns="http://www.w3.org/2000/svg" width="720" height="320" viewBox="0 0 720 320" font-family="Segoe UI, Noto Sans SC, sans-serif">
+<rect width="720" height="320" fill="#ffffff"/>
+<text x="62" y="20" font-size="14" fill="#333">宏观阻断率（越高越好）与成本</text>
+<line x1="62" y1="268.0" x2="696" y2="268.0" stroke="#e9ecef" stroke-width="1"/>
+<text x="54" y="272.0" font-size="11" fill="#868e96" text-anchor="end">0%</text>
+<line x1="62" y1="209.5" x2="696" y2="209.5" stroke="#e9ecef" stroke-width="1"/>
+<text x="54" y="213.5" font-size="11" fill="#868e96" text-anchor="end">25%</text>
+<line x1="62" y1="151.0" x2="696" y2="151.0" stroke="#e9ecef" stroke-width="1"/>
+<text x="54" y="155.0" font-size="11" fill="#868e96" text-anchor="end">50%</text>
+<line x1="62" y1="92.5" x2="696" y2="92.5" stroke="#e9ecef" stroke-width="1"/>
+<text x="54" y="96.5" font-size="11" fill="#868e96" text-anchor="end">75%</text>
+<line x1="62" y1="34.0" x2="696" y2="34.0" stroke="#e9ecef" stroke-width="1"/>
+<text x="54" y="38.0" font-size="11" fill="#868e96" text-anchor="end">100%</text>
+<rect x="119.7" y="73.0" width="96.0" height="195.0" fill="#4c6ef5" rx="4"/>
+<text x="167.7" y="65.0" font-size="12" fill="#333" text-anchor="middle">83.3%</text>
+<text x="167.7" y="288.0" font-size="12" fill="#495057" text-anchor="middle">A3</text>
+<text x="167.7" y="306.0" font-size="11" fill="#868e96" text-anchor="middle">¥0.00</text>
+<rect x="331.0" y="73.0" width="96.0" height="195.0" fill="#f59f00" rx="4"/>
+<text x="379.0" y="65.0" font-size="12" fill="#333" text-anchor="middle">83.3%</text>
+<text x="379.0" y="288.0" font-size="12" fill="#495057" text-anchor="middle">A3L</text>
+<text x="379.0" y="306.0" font-size="11" fill="#868e96" text-anchor="middle">¥0.40</text>
+<rect x="542.3" y="34.0" width="96.0" height="234.0" fill="#12b886" rx="4"/>
+<text x="590.3" y="26.0" font-size="12" fill="#333" text-anchor="middle">100.0%</text>
+<text x="590.3" y="288.0" font-size="12" fill="#495057" text-anchor="middle">A4</text>
+<text x="590.3" y="306.0" font-size="11" fill="#868e96" text-anchor="middle">¥0.55</text>
+<line x1="62" y1="268" x2="696" y2="268" stroke="#adb5bd" stroke-width="1"/>
+</svg></div>
+
+<h2>2. 各类缺陷阻断率</h2>
+<div class="card"><svg xmlns="http://www.w3.org/2000/svg" width="720" height="300" viewBox="0 0 720 300" font-family="Segoe UI, Noto Sans SC, sans-serif">
+<rect width="720" height="300" fill="#ffffff"/>
+<text x="16" y="24" font-size="14" fill="#333">各类缺陷阻断率</text>
+<text x="234.0" y="32" font-size="12" fill="#495057" text-anchor="middle">A3</text>
+<text x="422.0" y="32" font-size="12" fill="#495057" text-anchor="middle">A3L</text>
+<text x="610.0" y="32" font-size="12" fill="#495057" text-anchor="middle">A4</text>
+<text x="130" y="65.0" font-size="12" fill="#495057" text-anchor="end">D1 答非所问</text>
+<rect x="140.0" y="44.0" width="182.0" height="28" fill="rgb(245,90,120)" rx="3"/>
+<text x="231.0" y="64.0" font-size="11" fill="#ffffff" text-anchor="middle">0%</text>
+<rect x="328.0" y="44.0" width="182.0" height="28" fill="rgb(245,90,120)" rx="3"/>
+<text x="419.0" y="64.0" font-size="11" fill="#ffffff" text-anchor="middle">0%</text>
+<rect x="516.0" y="44.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="607.0" y="64.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<text x="130" y="99.0" font-size="12" fill="#495057" text-anchor="end">D2 指代断裂</text>
+<rect x="140.0" y="78.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="231.0" y="98.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="328.0" y="78.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="419.0" y="98.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="516.0" y="78.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="607.0" y="98.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<text x="130" y="133.0" font-size="12" fill="#495057" text-anchor="end">D3 事实冲突</text>
+<rect x="140.0" y="112.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="231.0" y="132.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="328.0" y="112.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="419.0" y="132.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="516.0" y="112.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="607.0" y="132.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<text x="130" y="167.0" font-size="12" fill="#495057" text-anchor="end">D4 角色混淆</text>
+<rect x="140.0" y="146.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="231.0" y="166.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="328.0" y="146.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="419.0" y="166.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="516.0" y="146.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="607.0" y="166.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<text x="130" y="201.0" font-size="12" fill="#495057" text-anchor="end">D5 重复空转</text>
+<rect x="140.0" y="180.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="231.0" y="200.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="328.0" y="180.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="419.0" y="200.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="516.0" y="180.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="607.0" y="200.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<text x="130" y="235.0" font-size="12" fill="#495057" text-anchor="end">D6 缺失承接</text>
+<rect x="140.0" y="214.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="231.0" y="234.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="328.0" y="214.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="419.0" y="234.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="516.0" y="214.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="607.0" y="234.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+</svg></div>
+
+<h2>3. 决策链</h2>
+<div class="card"><svg xmlns="http://www.w3.org/2000/svg" width="760" height="240" viewBox="0 0 760 240" font-family="Segoe UI, Noto Sans SC, sans-serif">
+<rect width="760" height="240" fill="#ffffff"/>
+<text x="24" y="20" font-size="14" fill="#333">决策链（观察 → 决策 → 工具 → 反馈）</text>
+<line x1="24" y1="74" x2="736" y2="74" stroke="#dee2e6" stroke-width="2"/>
+<circle cx="24.0" cy="74" r="7" fill="#4c6ef5"/>
+<text x="24.0" y="56" font-size="10" fill="#868e96" text-anchor="middle">决策</text>
+<text x="24.0" y="100" font-size="11" fill="#343a40" text-anchor="middle">check_consistency</text>
+<circle cx="166.4" cy="74" r="7" fill="#12b886"/>
+<text x="166.4" y="56" font-size="10" fill="#868e96" text-anchor="middle">0ms</text>
+<text x="166.4" y="100" font-size="11" fill="#343a40" text-anchor="middle">check_consistency(ok)</text>
+<circle cx="308.8" cy="74" r="7" fill="#4c6ef5"/>
+<text x="308.8" y="56" font-size="10" fill="#868e96" text-anchor="middle">决策</text>
+<text x="308.8" y="100" font-size="11" fill="#343a40" text-anchor="middle">check_coherence</text>
+<circle cx="451.2" cy="74" r="7" fill="#e03131"/>
+<text x="451.2" y="56" font-size="10" fill="#868e96" text-anchor="middle">1671ms</text>
+<text x="451.2" y="100" font-size="11" fill="#343a40" text-anchor="middle">check_coherence(违规)</text>
+<circle cx="593.6" cy="74" r="7" fill="#4c6ef5"/>
+<text x="593.6" y="56" font-size="10" fill="#868e96" text-anchor="middle">决策</text>
+<text x="593.6" y="100" font-size="11" fill="#343a40" text-anchor="middle">fallback_keep</text>
+<circle cx="736.0" cy="74" r="7" fill="#12b886"/>
+<text x="736.0" y="56" font-size="10" fill="#868e96" text-anchor="middle">0ms</text>
+<text x="736.0" y="100" font-size="11" fill="#343a40" text-anchor="middle">fallback_keep(ok)</text>
+</svg></div>
+<h2>3.1 Before / After</h2><div class="card"><svg xmlns="http://www.w3.org/2000/svg" width="760" height="320" viewBox="0 0 760 320" font-family="Segoe UI, Noto Sans SC, sans-serif">
+<rect width="760" height="320" fill="#ffffff"/>
+<text x="20" y="24" font-size="14" fill="#333">答非所问（D1）：催单却回复要求支付</text>
+<rect x="20" y="44" width="720" height="46" fill="#f1f3f5" rx="6"/>
+<text x="34" y="64" font-size="12" fill="#495057">用户诉求</text>
+<text x="34" y="84" font-size="13" fill="#343a40">已经等很久了，麻烦帮我催一下。（订单号 ORD-556516）</text>
+<rect x="20" y="102" width="720" height="46" fill="#fff5f5" rx="6"/>
+<text x="34" y="122" font-size="12" fill="#e03131">受损候选（注入缺陷）</text>
+<text x="34" y="142" font-size="13" fill="#343a40">请在十五分钟内完成支付，否则订单会自动关闭。</text>
+<rect x="20" y="160" width="720" height="46" fill="#ebfbee" rx="6"/>
+<text x="34" y="180" font-size="12" fill="#12b886">Agent 输出（回退原文）</text>
+<text x="34" y="200" font-size="13" fill="#343a40">我已为您催办，预计两个工作日内有进展。</text>
+<text x="20" y="304" font-size="12" fill="#868e96">判定：C3_off_topic @turn 2 · 用户催单，却回复要求支付 → fallback_keep</text>
+</svg></div>
+
+<h2>4. 明细</h2>
+<div class="card"><table>
+<thead><tr><th>臂</th><th>D1 答非所问</th><th>D2 指代断裂</th><th>D3 事实冲突</th><th>D4 角色混淆</th><th>D5 重复空转</th><th>D6 缺失承接</th><th>误报</th><th>macro</th><th>tokens</th><th>成本</th></tr></thead>
+<tbody><tr><td><b>A3</b><br><span class='muted'>规则策略 + 确定性工具</span></td><td>0/20</td><td>20/20</td><td>20/20</td><td>20/20</td><td>20/20</td><td>20/20</td><td>0/12</td><td>83.3%</td><td>0</td><td>¥0.00</td></tr><tr><td><b>A3L</b><br><span class='muted'>LLM 决策 + 确定性工具</span></td><td>0/20</td><td>20/20</td><td>20/20</td><td>20/20</td><td>20/20</td><td>20/20</td><td>0/12</td><td>83.3%</td><td>251,561</td><td>¥0.40</td></tr><tr><td><b>A4</b><br><span class='muted'>LLM 决策 + 确定性工具 + 语义判官</span></td><td>20/20</td><td>20/20</td><td>20/20</td><td>20/20</td><td>20/20</td><td>20/20</td><td>0/12</td><td>100.0%</td><td>305,910</td><td>¥0.55</td></tr></tbody></table></div>
+
+<h2>5. 结论</h2>
+<div class="card"><ol><li>A3 → A3L：宏观阻断率不变（83.3%），成本变化 ¥0.40 —— 该层因子在这套工具集上没有带来增量。</li><li>A3L → A4：宏观阻断率 83.3% → 100.0%（+16.7pp），成本变化 ¥0.15。</li><li>语义判官带来的增量集中在：D1 答非所问 +100pp。</li><li>A3 干净样本误报 0/12（0.0%）。</li><li>A3L 干净样本误报 0/12（0.0%）。</li><li>A4 干净样本误报 0/12（0.0%）。</li><li>A4 有 1 条样本因预算/墙钟中止，已与「未检出」分开计数（环境噪声不计入模型能力）。</li></ol></div>
+<h2>5.1 数据修正说明</h2><div class="card"><ul><li>A4 · per_type.D5_repetition.blocked：19 → 20；评测期间宿主机进入 Modern Standby 39 分钟（22:49:06–23:28:27），恢复后该条被墙钟预算中止，属环境中断而非模型漏检（复核：ablation_recheck_A4_D5_repetition-001（detected 1/1, blocked 1/1））</li></ul></div>
+
+<h2>6. 复现</h2>
+<div class="card"><pre>python -m agent.benchmark.agent_eval --arm A3 --out agent/benchmark/output/ablation_A3.json
+python -m agent.benchmark.agent_eval --arm A4 --live
+python -m agent.benchmark.report --results agent/benchmark/output --out portfolio</pre></div>
+</div></body></html>

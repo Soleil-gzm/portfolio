@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="320" viewBox="0 0 760 320" font-family="Segoe UI, Noto Sans SC, sans-serif">
+<rect width="760" height="320" fill="#ffffff"/>
+<text x="20" y="24" font-size="14" fill="#333">答非所问（D1）：催单却回复要求支付</text>
+<rect x="20" y="44" width="720" height="46" fill="#f1f3f5" rx="6"/>
+<text x="34" y="64" font-size="12" fill="#495057">用户诉求</text>
+<text x="34" y="84" font-size="13" fill="#343a40">已经等很久了，麻烦帮我催一下。（订单号 ORD-556516）</text>
+<rect x="20" y="102" width="720" height="46" fill="#fff5f5" rx="6"/>
+<text x="34" y="122" font-size="12" fill="#e03131">受损候选（注入缺陷）</text>
+<text x="34" y="142" font-size="13" fill="#343a40">请在十五分钟内完成支付，否则订单会自动关闭。</text>
+<rect x="20" y="160" width="720" height="46" fill="#ebfbee" rx="6"/>
+<text x="34" y="180" font-size="12" fill="#12b886">Agent 输出（回退原文）</text>
+<text x="34" y="200" font-size="13" fill="#343a40">我已为您催办，预计两个工作日内有进展。</text>
+<text x="20" y="304" font-size="12" fill="#868e96">判定：C3_off_topic @turn 2 · 用户催单，却回复要求支付 → fallback_keep</text>
+</svg>

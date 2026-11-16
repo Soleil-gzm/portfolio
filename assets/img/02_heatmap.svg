@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="300" viewBox="0 0 720 300" font-family="Segoe UI, Noto Sans SC, sans-serif">
+<rect width="720" height="300" fill="#ffffff"/>
+<text x="16" y="24" font-size="14" fill="#333">各类缺陷阻断率</text>
+<text x="234.0" y="32" font-size="12" fill="#495057" text-anchor="middle">A3</text>
+<text x="422.0" y="32" font-size="12" fill="#495057" text-anchor="middle">A3L</text>
+<text x="610.0" y="32" font-size="12" fill="#495057" text-anchor="middle">A4</text>
+<text x="130" y="65.0" font-size="12" fill="#495057" text-anchor="end">D1 答非所问</text>
+<rect x="140.0" y="44.0" width="182.0" height="28" fill="rgb(245,90,120)" rx="3"/>
+<text x="231.0" y="64.0" font-size="11" fill="#ffffff" text-anchor="middle">0%</text>
+<rect x="328.0" y="44.0" width="182.0" height="28" fill="rgb(245,90,120)" rx="3"/>
+<text x="419.0" y="64.0" font-size="11" fill="#ffffff" text-anchor="middle">0%</text>
+<rect x="516.0" y="44.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="607.0" y="64.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<text x="130" y="99.0" font-size="12" fill="#495057" text-anchor="end">D2 指代断裂</text>
+<rect x="140.0" y="78.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="231.0" y="98.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="328.0" y="78.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="419.0" y="98.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="516.0" y="78.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="607.0" y="98.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<text x="130" y="133.0" font-size="12" fill="#495057" text-anchor="end">D3 事实冲突</text>
+<rect x="140.0" y="112.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="231.0" y="132.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="328.0" y="112.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="419.0" y="132.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="516.0" y="112.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="607.0" y="132.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<text x="130" y="167.0" font-size="12" fill="#495057" text-anchor="end">D4 角色混淆</text>
+<rect x="140.0" y="146.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="231.0" y="166.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="328.0" y="146.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="419.0" y="166.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="516.0" y="146.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="607.0" y="166.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<text x="130" y="201.0" font-size="12" fill="#495057" text-anchor="end">D5 重复空转</text>
+<rect x="140.0" y="180.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="231.0" y="200.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="328.0" y="180.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="419.0" y="200.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="516.0" y="180.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="607.0" y="200.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<text x="130" y="235.0" font-size="12" fill="#495057" text-anchor="end">D6 缺失承接</text>
+<rect x="140.0" y="214.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="231.0" y="234.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="328.0" y="214.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="419.0" y="234.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+<rect x="516.0" y="214.0" width="182.0" height="28" fill="rgb(55,230,80)" rx="3"/>
+<text x="607.0" y="234.0" font-size="11" fill="#ffffff" text-anchor="middle">100%</text>
+</svg>
