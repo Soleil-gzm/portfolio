@@ -40,9 +40,10 @@
         <p class="eyebrow">Case 03 · Pipeline</p>
         <h1>对话数据清洗与语义增强流水线</h1>
         <p class="lede">
-          把原始对话变成可训练、可复现、可扩展的批次。
-          五个步骤固定生命周期，增强器与分析器按配置插拔，
-          每一步都能单独重跑。
+          我重构这条流水线时，主要解决合成数据过于规整、缺乏真实电话对话特征的问题：
+          补充结巴、重复以及口音导致的转写差异等变化，提升训练数据的多样性，
+          让模型训练样本更接近真实场景。流程拆成五个固定步骤，
+          增强器与分析器按配置插拔，每一步都能单独重跑。
         </p>
         <div class="case-meta">
           <span>Private</span>
@@ -76,15 +77,15 @@
       <h2>问题</h2>
       <p>
         原始对话数据含有大量语义重复轮次，且不同训练目标需要的切片、条数和噪声分布都不一样。
-        如果写成一次性脚本，会遇到三个问题：
+        我最初用一次性脚本实现，实际运行后暴露出三个问题：
       </p>
       <ul>
-        <li><strong>断点不可恢复</strong>：跑到第 4 步失败，前 3 步的产物无法判定是否可信。</li>
-        <li><strong>增强逻辑与主流程耦合</strong>：想换一种增强方式，就要改主脚本。</li>
-        <li><strong>结果不可解释</strong>：只看到条数变化，说不清每一步过滤掉了什么。</li>
+        <li><strong>断点不可恢复</strong>：跑到第 4 步失败时，前 3 步的产物无法判定是否可信，只能整批重跑。</li>
+        <li><strong>增强逻辑与主流程耦合</strong>：增强逻辑直接写在主脚本里，我想换一种增强方式就要改动主流程，容易牵连已经验证过的部分。</li>
+        <li><strong>结果不可解释</strong>：只看到条数变化，我说不清每一步过滤掉了什么，分布异常时也无法定位发生在哪一步。</li>
       </ul>
       <p>
-        因此把流程拆成固定五步，每步有统一的 <code>pre_run → run → post_run</code> 生命周期，
+        因此我把流程拆成固定五步，每步有统一的 <code>pre_run → run → post_run</code> 生命周期，
         增强器和分析器通过注册表接入，产物与完成标记都落在任务目录。
       </p>
 
@@ -105,58 +106,58 @@
         <article class="decision">
           <h3>把 God Object 拆成三个组件</h3>
           <p>
-            原先的 <code>PipelineContext</code> 同时管配置、路径和状态。现在拆成
+            原先的 <code>PipelineContext</code> 同时管配置、路径和状态。三者变更频率完全不同，
+            混在一起既难测也难替换，因此我把它拆成
             <code>ConfigManager</code>、<code>PathResolver</code>、<code>StateTracker</code>，
             通过构造函数注入给每个步骤。
           </p>
-          <span class="why">为什么：三个职责的变更频率完全不同，混在一起既难测也难替换。</span>
         </article>
 
         <article class="decision">
           <h3>用 <code>weight</code> 一个参数同时表达启用与权重</h3>
           <p>
-            <code>weight &gt; 0</code> 表示启用，并作为被选中的相对权重；
+            <code>enabled</code> 与 <code>weight</code> 并存时，两者迟早互相矛盾，
+            因此我只保留 <code>weight</code>：<code>weight &gt; 0</code> 表示启用，并作为被选中的相对权重；
             <code>weight &lt;= 0</code> 表示禁用。增强器配置由
             <code>AUGMENTER_META</code> 统一管理，只有一份定义。
           </p>
-          <span class="why">为什么：<code>enabled</code> 与 <code>weight</code> 并存时，两者迟早互相矛盾。</span>
         </article>
 
         <article class="decision">
           <h3>断点续跑用文件标记，而不是数据库</h3>
           <p>
+            这套流程是批处理，文件标记足够可靠，也方便人工排查中间产物，因此不引入数据库：
             每个步骤完成后在任务目录写 <code>.step_&lt;name&gt;_done</code>，
             重跑时由 <code>StateTracker.is_step_done()</code> 判断。产物目录本身就是任务状态的来源。
           </p>
-          <span class="why">为什么：这套流程是批处理，文件标记足够可靠，也方便人工排查中间产物。</span>
         </article>
 
         <article class="decision">
           <h3>删掉多余的一层抽象</h3>
           <p>
-            早期设计的 <code>Executor</code> 调度层在实现后被移除，生命周期管理直接内联在
+            早期设计的 <code>Executor</code> 调度层在实现后被我移除：它只做转发，
+            增加了调试时的跳转成本，却没有带来实际的扩展收益。生命周期管理直接内联在
             <code>Pipeline._run_single()</code> 里。
           </p>
-          <span class="why">为什么：这层只做转发，增加了调试跳转，却没有带来实际扩展收益。</span>
         </article>
 
         <article class="decision">
           <h3>ASR 噪声用拼音与语义两路打分</h3>
           <p>
-            预处理阶段一次性计算异常词的拼音串与语义向量。替换时综合得分为
+            只按拼音匹配会替换出语义无关的词，只按语义又会丢掉真实转写错误的形态。
+            因此我在预处理阶段一次性计算异常词的拼音串与语义向量，替换时使用综合得分
             <code>α × 拼音相似度 + (1 − α) × 语义相似度</code>（默认 <code>α = 0.7</code>），
             拼音相似度按编辑距离归一化。
           </p>
-          <span class="why">为什么：只按拼音匹配会替换出语义无关的词；只按语义又会丢掉真实转写错误的形态。</span>
         </article>
 
         <article class="decision">
           <h3>增强步骤做三处性能优化</h3>
           <p>
+            增强是逐条 × 逐变体的嵌套循环，重复分词和多余拷贝会放大成主要开销，因此我做了三处优化：
             分词结果用 <code>lru_cache</code> 缓存；确认文本真的变化后才 <code>deepcopy</code>；
             循环外预先取出所有可增强消息的文本。
           </p>
-          <span class="why">为什么：增强是逐条 × 逐变体的嵌套循环，重复分词和多余拷贝会放大成主要开销。</span>
         </article>
       </div>
 

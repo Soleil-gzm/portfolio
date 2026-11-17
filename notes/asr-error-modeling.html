@@ -99,46 +99,45 @@
         <article class="decision">
           <h3>先筛句子，再算词级 NLL</h3>
           <p>
-            词级 NLL 的开销远高于句子级。先用句子级打分把范围缩到 5%，
-            再逐词计算，算力集中在最可能出错的文本上。
+            词级 NLL 的开销远高于句子级。全量逐词打分成本不可接受，而随机抽样又会漏掉真正的错误，
+            因此我先用句子级打分把范围缩到 5%，再逐词计算，让算力集中在最可能出错的文本上。
           </p>
-          <span class="why">为什么：全量逐词打分成本不可接受，而随机抽样又会漏掉真正的错误。</span>
         </article>
 
         <article class="decision">
           <h3>用百分位阈值，而不是硬编码绝对值</h3>
           <p>
-            配置里取 <code>threshold_percentile: 95</code>，即 NLL 最高的 5%。
+            不同批次、不同领域的 NLL 分布不同，固定阈值会让某一批几乎选不出句子，
+            因此我使用百分位阈值：配置里取 <code>threshold_percentile: 95</code>，即 NLL 最高的 5%，
             同时保留 <code>absolute_threshold</code> 作为可选覆盖。
           </p>
-          <span class="why">为什么：不同批次、不同领域的 NLL 分布不同，固定阈值会让某一批几乎选不出句子。</span>
         </article>
 
         <article class="decision">
           <h3>采样比例与随机种子都可配置</h3>
           <p>
-            句子级计算支持 <code>sample_ratio</code>，并固定 <code>sample_seed</code>；
+            调参阶段需要快速迭代，但结论必须可复现，因此句子级计算支持
+            <code>sample_ratio</code>，并固定 <code>sample_seed</code>；
             当前配置采样 10% 做试验，重跑结果一致。
           </p>
-          <span class="why">为什么：调参阶段需要快速迭代，但结论必须可复现。</span>
         </article>
 
         <article class="decision">
           <h3>过滤规则和统计分开</h3>
           <p>
-            噪声词对提取之后单独做清洗：纯数字对、英文片段、姓名/称谓前置词都可以按开关剔除，
-            统计报告另外生成。
+            过滤标准会随数据变化，混在提取逻辑里会导致每次改规则都要动主流程，
+            因此我把过滤规则和统计分开：噪声词对提取之后单独做清洗，
+            纯数字对、英文片段、姓名/称谓前置词都可以按开关剔除，统计报告另外生成。
           </p>
-          <span class="why">为什么：过滤标准会随数据变化，混在提取逻辑里会导致每次改规则都要动主流程。</span>
         </article>
 
         <article class="decision">
           <h3>断点续跑沿用文件标记</h3>
           <p>
+            NLL 计算是长任务，中断后重算整条链路代价太高，因此沿用文件标记：
             每个步骤完成后写 <code>.step_*_done</code>，<code>resume: true</code> 时跳过；
             需要强制重跑就删掉对应标记。
           </p>
-          <span class="why">为什么：NLL 计算是长任务，中断后重算整条链路代价太高。</span>
         </article>
       </div>
 
