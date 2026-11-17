@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,6 +10,7 @@
   <link rel="stylesheet" href="../assets/css/site.css">
   <script src="../assets/js/site.js" defer></script>
 </head>
+
 <body>
   <a class="skip-link" href="#main">跳到正文</a>
 
@@ -85,7 +87,7 @@
         两条链路，先粗后细：
       </p>
       <ul>
-        <li><strong>句子级。</strong>清洗并抽取句子，用预训练语言模型计算 NLL，按百分位取最高的一批。</li>
+        <li><strong>句子级。</strong>清洗并抽取句子，用预训练语言模型计算 NLL，按百分位取最高的一批句子。</li>
         <li><strong>词级。</strong>只对可疑句子逐词计算 NLL，定位高概率异常词，并记录它的前置词。</li>
       </ul>
       <p>
@@ -185,4 +187,5 @@
     </div>
   </footer>
 </body>
+
 </html>
