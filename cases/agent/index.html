@@ -64,7 +64,7 @@
           <div class="stat-label">干净样本误报</div>
         </div>
         <div class="stat">
-          <div class="stat-value">479</div>
+          <div class="stat-value">489</div>
           <div class="stat-label">开源切片测试通过（1 skipped）</div>
         </div>
       </div>
@@ -156,6 +156,66 @@
           </p>
         </article>
       </div>
+
+      <h2>数据分布校准</h2>
+      <p>
+        最初的公开轨只有 3–7 轮、system 约 142 字，适合冻结基线，但不代表真实多轮数据。
+        我从私有轨 1000 条对话中只提取聚合分布：轮次直方图、去数字后的角色唯一率、
+        对话内重复率、消息长度分位与实体密度；再用中立域话术重新生成公开数据，
+        <strong>不复制原文、业务标签或客户信息</strong>。
+      </p>
+      <div class="figure">
+        <table>
+          <caption class="small muted" style="text-align:left;padding-bottom:.5rem">realistic 档 1000 条校准跑；
+            v1 仍是默认冻结基线，二者产物分开。</caption>
+          <thead>
+            <tr>
+              <th>指标</th>
+              <th>v1 base</th>
+              <th>realistic</th>
+              <th>私有轨聚合</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>轮次中位 / 均值</td>
+              <td>4 / 4.67</td>
+              <td>11 / 10.85</td>
+              <td>11 / 10.85</td>
+            </tr>
+            <tr>
+              <td>assistant / user 唯一率</td>
+              <td>10.7% / 21.4%</td>
+              <td>49.3% / 28.3%</td>
+              <td>49.5% / 28.5%</td>
+            </tr>
+            <tr>
+              <td>对话内 assistant 重复</td>
+              <td>8.3%</td>
+              <td>2.9%</td>
+              <td>3.3%</td>
+            </tr>
+            <tr>
+              <td>system 长度</td>
+              <td>142</td>
+              <td>363–365</td>
+              <td>348–375</td>
+            </tr>
+            <tr>
+              <td>消息数范围</td>
+              <td>7–15</td>
+              <td>3–53</td>
+              <td>3–53</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">
+        校准参数与生成器分别在 <code>agent/benchmark/profiles.py</code> 和
+        <code>agent/benchmark/realistic.py</code>；门禁由
+        <code>agent/tests/test_fixture_profile.py</code> 固化。
+        realistic 档只用于生成公开 fixture，不改变已冻结的 A0 基线指纹。
+      </p>
 
       <h2>评测设计</h2>
       <p>
@@ -386,7 +446,8 @@ assistant : 请在十五分钟内完成支付，否则订单会自动关闭。</
       <ul>
         <li><strong>修复率仍低。</strong>改写已接入且强制复检，但 A4R 修复率只有 13.3%，
           <code>repaired</code> 样本尚未人工抽检，不能当作语义正确的证明。</li>
-        <li><strong>合成缺陷。</strong>6 类缺陷是程序化注入，不是真实生产分布。</li>
+        <li><strong>合成缺陷。</strong>6 类缺陷是程序化注入；公开轨的轮次、重复率、长度与
+          实体密度已用私有轨聚合分布校准，但话术仍是合成的，不是真实生产文本。</li>
         <li><strong>单模型、单次运行、小样本。</strong>生成与判官均为本地 <code>qwen3:8b</code>，
           没有多模型对比与置信区间，也未跑跨臂显著性检验。</li>
         <li><strong>判官校准存在过拟合风险。</strong>判官 v3 用公开轨 D1 做过开发集校准，
@@ -406,7 +467,7 @@ assistant : 请在十五分钟内完成支付，否则订单会自动关闭。</
       </p>
       <p>
         开源切片按 <code>oss_manifest.txt</code> 导出，发布文件不含业务标识，
-        公开代码不依赖上游工程；独立目录实测 479 passed / 1 skipped。
+        公开代码不依赖上游工程；独立目录实测 489 passed / 1 skipped。
       </p>
       <p>
         源码仓库：<a
@@ -414,8 +475,11 @@ assistant : 请在十五分钟内完成支付，否则订单会自动关闭。</
       </p>
       <pre><code>python -m pip install -e ".[dev]"
 
-# 同 seed 生成同数据
+# 同 seed 生成同数据（默认 v1 冻结基线）
 python -m agent.benchmark.fixtures --n 12 --seed 20261112
+
+# 分布校准档：只匹配私有轨聚合形状，不复制原文
+python -m agent.benchmark.fixtures --profile realistic
 
 # 离线复现 A0 基线指纹
 python -m agent.benchmark.run \
