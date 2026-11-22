@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>对话数据修复 Agent | Portfolio</title>
-  <meta name="description" content="可插拔的对话质量 Agent：6 类缺陷检测、保真约束、语义判官、三臂消融、四元组基线指纹与成本账本。">
+  <meta name="description" content="可插拔的对话质量 Agent：6 类缺陷检测、保真约束、语义判官、六臂消融、四元组基线指纹、模型溯源与成本账本。">
   <meta name="theme-color" content="#f7f5f0">
   <link rel="stylesheet" href="../../assets/css/site.css">
   <script src="../../assets/js/site.js" defer></script>
@@ -150,7 +150,8 @@
           <p>
             本轮生成与判官都在本地 Ollama <code>qwen3:8b</code> 上运行，现金支出为 ¥0。
             为了能和 API 方案比较，我保留账本里的输入 / 缓存 / 输出 token，
-            再按 DeepSeek 高峰价（输入 ¥2/M、缓存命中 ¥0.04/M、输出 ¥8/M）折算
+            再按 DeepSeek <code>deepseek-flash</code> 2026-11 高峰价
+            （输入 ¥2/M、缓存命中 ¥0.04/M、输出 ¥8/M）折算
             <strong>参考成本</strong>。页面与图表中的 ¥ 都标明是参考值，不冒充真实账单。
           </p>
         </article>
@@ -280,7 +281,8 @@
       </div>
       <p class="small muted">
         D1 答非所问 · D2 指代断裂 · D3 事实冲突 · D4 角色混淆 · D5 重复空转 · D6 缺失承接。
-        * 参考成本：本地实际支出 ¥0；按 DeepSeek 高峰价（输入 ¥2/M、缓存命中 ¥0.04/M、输出 ¥8/M）
+        * 参考成本：本地实际支出 ¥0；按 DeepSeek <code>deepseek-flash</code> 2026-11 高峰价
+        （输入 ¥2/M、缓存命中 ¥0.04/M、输出 ¥8/M）
         对 append-only 账本全部调用（含判官与重试）折算。tokens 列只统计决策调用，
         因此不能直接用 tokens × 单价复算。
       </p>
@@ -437,7 +439,8 @@ python -m pytest</code></pre>
         完整数据与结论：
         <a href="../../assets/agent/benchmark_report.html">HTML 报告</a> ·
         <a href="../../assets/agent/benchmark_report.md">Markdown</a> ·
-        <a href="../../assets/agent/benchmark_report.json">JSON</a>
+        <a href="../../assets/agent/benchmark_report.json">JSON</a>。
+        报告由原始结果直接生成，成本字段为本地实际 ¥0；DeepSeek 参考成本见上表。
       </p>
 
       <div class="next-prev">
