@@ -17,9 +17,9 @@
 | --- | --- |
 | 工具 | `check_consistency`（R1–R5 保真校验）、`check_coherence`（C0–C3 连贯性检查）、`fallback_keep`（回退原文）、`rewrite_segment`（受限局部改写） |
 | 决策 | 规则策略与 LLM function calling 双策略；模型只选择工具名，参数由运行时注入 |
-| 可靠性 | 迭代 / 调用 / token / 墙钟预算，重复工具调用识别，checkpoint 与 Trace |
+| 可靠性 | 迭代 / 调用 / token / 墙钟预算，重复工具调用识别，checkpoint 断点续跑，Trace；cassette 录制后可离线回放 |
 | 成本 | append-only token 账本，记录缓存命中、价格表版本与折算成本；本地推理另记参考成本 |
-| 评测 | 四元组基线指纹、不可变 `baseline_lock.json`、六臂单变量对照与自动报告 |
+| 评测 | 四元组基线指纹、不可变 `baseline_lock.json`、六臂单变量对照与自动报告；replay 档零成本复核 |
 | 数据 | 公开轨 `v1` 冻结；`realistic` 档用私有轨聚合分布校准轮次、重复率、长度与实体密度 |
 
 ### 评测结果
@@ -28,7 +28,7 @@
 
 | 指标 | 结果 |
 | --- | --- |
-| 公开 Agent 仓库测试 | 489 passed / 1 skipped |
+| 公开 Agent 仓库测试 | 517 passed / 1 skipped |
 | 公开轨分布校准 | `realistic` 1000 条：轮次中位 11、assistant/user 唯一率 49.3% / 28.3%、system 363–365 字；只匹配私有轨聚合分布，不复制原文 |
 | A2：单次 LLM 重写 | 宏观阻断率 0%（无回退），干净样本改写 10/12，参考成本 ¥0.93 |
 | A3：规则决策 + 确定性工具 | 宏观阻断率 83.3%，0 token，¥0 |
