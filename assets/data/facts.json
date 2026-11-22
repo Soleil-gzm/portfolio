@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-11-22",
+  "verified_at": "2026-11-23",
   "note": "所有页面数字必须能追溯到本文件 sources 中的路径或核验命令；修改数字时先改这里。",
   "agent": {
     "display_name": "对话数据修复 Agent",
@@ -8,12 +8,35 @@
     "public_files": 74,
     "root_files": 7,
     "excluded_files": 15,
-    "tests_passed": 479,
+    "tests_passed": 489,
     "tests_skipped": 1,
     "defects_total": 120,
     "defect_types": 6,
     "defects_per_type": 20,
     "clean_total": 12,
+    "distribution_calibration": {
+      "profile": "realistic",
+      "private_dialogues": 1000,
+      "generated_dialogues": 1000,
+      "turn_median": 11,
+      "turn_mean": 10.85,
+      "message_range": "3–53",
+      "assistant_unique_rate": 0.493,
+      "user_unique_rate": 0.283,
+      "internal_dup_rate": 0.029,
+      "system_chars": "363–365",
+      "private_assistant_unique_rate": 0.4953,
+      "private_user_unique_rate": 0.2851,
+      "private_internal_dup_rate": 0.033,
+      "private_system_chars": "348–375",
+      "boundary": "只匹配私有轨聚合分布，不复制原文、业务标签或客户信息",
+      "sources": [
+        "../dialogue-repair-agent/agent/fixtures/public/realistic_v1.json",
+        "../dialogue-repair-agent/agent/benchmark/profiles.py",
+        "../dialogue-repair-agent/agent/docs/notes/2026-11-23-公开轨分布校准.md"
+      ],
+      "verify": "在 dialogue-repair-agent 仓库执行 python -m pytest agent/tests/test_fixture_profile.py -q"
+    },
     "model": {
       "provider": "ollama",
       "name": "qwen3:8b",
