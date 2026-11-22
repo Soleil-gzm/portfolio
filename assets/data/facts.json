@@ -1,59 +1,115 @@
 {
-  "verified_at": "2026-11-16",
+  "verified_at": "2026-11-22",
   "note": "所有页面数字必须能追溯到本文件 sources 中的路径或核验命令；修改数字时先改这里。",
   "agent": {
     "display_name": "对话数据修复 Agent",
-    "stage": "检测 + 回退（不重写）",
+    "stage": "检测 + 回退 + 受限改写",
     "license": "Apache-2.0",
     "public_files": 74,
     "root_files": 7,
     "excluded_files": 15,
-    "tests_passed": 353,
-    "tests_skipped": 5,
+    "tests_passed": 479,
+    "tests_skipped": 1,
     "defects_total": 120,
     "defect_types": 6,
     "defects_per_type": 20,
     "clean_total": 12,
+    "model": {
+      "provider": "ollama",
+      "name": "qwen3:8b",
+      "base_url": "http://127.0.0.1:11434/v1",
+      "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+      "quantization": "Q4_K_M",
+      "parameter_size": "8.2B",
+      "size_bytes": 5225388164,
+      "roles": "生成与判官使用同一模型"
+    },
+    "reference_pricing": {
+      "basis": "DeepSeek deepseek-flash 2026-11 高峰价",
+      "input_per_1m_cny": 2.0,
+      "cached_input_per_1m_cny": 0.04,
+      "output_per_1m_cny": 8.0,
+      "actual_spend_cny": 0.0,
+      "note": "本地 Ollama 实际现金支出为 ¥0。页面上的 ¥ 是按上述 DeepSeek 价格对 append-only 账本全部调用 token（含判官与重试）折算的参考成本，不代表真实账单。"
+    },
     "arms": {
+      "A2": {
+        "decision": "单次 LLM 重写",
+        "macro_blocked": 0.0,
+        "false_positive": "10/12",
+        "tokens": 157507,
+        "calls": 118,
+        "failed": 7,
+        "cost_cny": 0.0,
+        "reference_cost_cny": 0.9309
+      },
       "A3": {
-        "decision": "规则",
+        "decision": "规则 + 确定性工具",
         "macro_blocked": 0.8333,
         "false_positive": "0/12",
         "tokens": 0,
         "calls": 0,
-        "cost_cny": 0.0
+        "cost_cny": 0.0,
+        "reference_cost_cny": 0.0
       },
       "A3L": {
-        "decision": "LLM function calling",
+        "decision": "LLM function calling + 确定性工具",
         "macro_blocked": 0.8333,
         "false_positive": "0/12",
-        "tokens": 251561,
-        "calls": 346,
-        "cost_cny": 0.3987
+        "tokens": 233376,
+        "calls": 284,
+        "failed": 2,
+        "cost_cny": 0.0,
+        "reference_cost_cny": 0.8719
+      },
+      "A3R": {
+        "decision": "规则 + 确定性工具 + rewrite_segment",
+        "macro_blocked": 0.6333,
+        "false_positive": "0/12",
+        "tokens": 40729,
+        "calls": 54,
+        "repaired": 24,
+        "cost_cny": 0.0,
+        "reference_cost_cny": 0.2104
       },
       "A4": {
-        "decision": "LLM + 语义判官",
-        "macro_blocked": 1.0,
+        "decision": "LLM + 确定性工具 + 语义判官",
+        "macro_blocked": 0.9833,
         "false_positive": "0/12",
-        "tokens": 305910,
-        "calls": 423,
-        "cost_cny": 0.5495,
-        "stopped": 1
+        "tokens": 273798,
+        "calls": 332,
+        "failed": 2,
+        "cost_cny": 0.0,
+        "reference_cost_cny": 1.0572
+      },
+      "A4R": {
+        "decision": "LLM + 全工具集（判官 + rewrite_segment）",
+        "macro_blocked": 0.8417,
+        "false_positive": "0/12",
+        "tokens": 429264,
+        "calls": 468,
+        "repaired": 16,
+        "failed": 3,
+        "cost_cny": 0.0,
+        "reference_cost_cny": 1.4207
       }
     },
-    "a4_raw_macro_blocked": 0.9917,
     "d1_before": "0/20",
-    "d1_after": "20/20",
-    "cost_delta_a3l_to_a4_cny": 0.15,
-    "cost_delta_a3_to_a3l_cny": 0.40,
+    "d1_after": "18/20",
+    "reference_cost_delta_a3_to_a3l_cny": 0.8719,
+    "reference_cost_delta_a3l_to_a4_cny": 0.1853,
     "sources": [
-      "../data_cleaning_and_augmentation_pipeline/agent/README.md",
-      "../data_cleaning_and_augmentation_pipeline/portfolio/agent-augmentation/benchmark_report.md",
-      "../data_cleaning_and_augmentation_pipeline/portfolio/agent-augmentation/data/ablation_A3.json",
-      "../data_cleaning_and_augmentation_pipeline/portfolio/agent-augmentation/data/ablation_A3L.json",
-      "../data_cleaning_and_augmentation_pipeline/portfolio/agent-augmentation/data/ablation_A4.json",
-      "../data_cleaning_and_augmentation_pipeline/portfolio/agent-augmentation/data/ablation_A4.raw.json"
-    ]
+      "../dialogue-repair-agent/README.md",
+      "../dialogue-repair-agent/logs/agent/2026-11-22-public-ollama/ablation_A2.json",
+      "../dialogue-repair-agent/logs/agent/2026-11-22-public-ollama/ablation_A3.json",
+      "../dialogue-repair-agent/logs/agent/2026-11-22-public-ollama/ablation_A3L.json",
+      "../dialogue-repair-agent/logs/agent/2026-11-22-public-ollama/ablation_A3R.json",
+      "../dialogue-repair-agent/logs/agent/2026-11-22-public-ollama/ablation_A4.json",
+      "../dialogue-repair-agent/logs/agent/2026-11-22-public-ollama/ablation_A4R.json",
+      "../dialogue-repair-agent/logs/agent/2026-11-22-public-ollama/manifest_A4.json",
+      "../dialogue-repair-agent/logs/agent/2026-11-22-public-ollama/report/benchmark_report.json"
+    ],
+    "verify": "在 dialogue-repair-agent 仓库执行 python -m agent.benchmark.report --results logs/agent/2026-11-22-public-ollama --out logs/agent/2026-11-22-public-ollama/report；参考成本由 ledgers/ledger_*.jsonl 的 token 按 DeepSeek 高峰价折算"
   },
   "generator": {
     "display_name": "可控多轮对话生成引擎",

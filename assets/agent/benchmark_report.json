@@ -4,7 +4,9 @@
     "dataset": {
       "n_defects": 120,
       "per_type": 20,
-      "n_clean": 12
+      "n_clean": 12,
+      "limit": 0,
+      "debug": false
     },
     "defect_types": [
       "D1_off_topic",
@@ -22,9 +24,198 @@
       "D5_repetition": "D5 重复空转",
       "D6_missing_response": "D6 缺失承接"
     },
-    "trace_events": 8
+    "models": {
+      "generate": [
+        {
+          "api_key_env": "DEEPSEEK_API_KEY",
+          "base_url": "http://127.0.0.1:11434/v1",
+          "has_key": true,
+          "json_mode": true,
+          "max_tokens": 2048,
+          "model": "qwen3:8b",
+          "ollama": {
+            "api": "http://127.0.0.1:11434/api/tags",
+            "details": {
+              "families": [
+                "qwen3"
+              ],
+              "family": "qwen3",
+              "format": "gguf",
+              "parameter_size": "8.2B",
+              "parent_model": "",
+              "quantization_level": "Q4_K_M"
+            },
+            "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+            "found": true,
+            "model": "qwen3:8b",
+            "modified_at": "2026-11-21T00:11:31.8121825+08:00",
+            "size": 5225388164
+          },
+          "provider": "ollama",
+          "temperature": 0.0,
+          "timeout_s": 300.0
+        }
+      ],
+      "judge": [
+        {
+          "api_key_env": "DEEPSEEK_API_KEY",
+          "base_url": "http://127.0.0.1:11434/v1",
+          "has_key": true,
+          "json_mode": true,
+          "max_tokens": 2048,
+          "model": "qwen3:8b",
+          "ollama": {
+            "api": "http://127.0.0.1:11434/api/tags",
+            "details": {
+              "families": [
+                "qwen3"
+              ],
+              "family": "qwen3",
+              "format": "gguf",
+              "parameter_size": "8.2B",
+              "parent_model": "",
+              "quantization_level": "Q4_K_M"
+            },
+            "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+            "found": true,
+            "model": "qwen3:8b",
+            "modified_at": "2026-11-21T00:11:31.8121825+08:00",
+            "size": 5225388164
+          },
+          "provider": "ollama",
+          "temperature": 0.0,
+          "timeout_s": 300.0
+        }
+      ],
+      "mixed": false
+    },
+    "trace_events": 0,
+    "limitations": [
+      "自动指标只能证明最终输出通过规则/判官校验，不能证明语义正确；repaired 样本必须人工抽检后才可引用。",
+      "blocked 对 A2 恒为 0：A2 没有回退能力，这是能力差异，不是漏检。",
+      "本报告不包含 McNemar 显著性检验；跨臂显著性见 --compare 产物。"
+    ]
   },
   "arms": [
+    {
+      "arm": "A2",
+      "description": "单次 LLM 重写，无工具/校验/回退",
+      "per_type": {
+        "D1_off_topic": {
+          "total": 20,
+          "detected": 0,
+          "blocked": 0
+        },
+        "D2_reference_broken": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 0
+        },
+        "D3_fact_conflict": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 0
+        },
+        "D4_role_confusion": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 0
+        },
+        "D5_repetition": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 0
+        },
+        "D6_missing_response": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 0
+        }
+      },
+      "macro_recall_blocked": 0.0,
+      "macro_recall_detected": 0.8333,
+      "repaired": 0,
+      "repair_rate": 0.0,
+      "clean_total": 12,
+      "clean_flagged": 10,
+      "clean_failed": 0,
+      "clean_stopped": 0,
+      "clean_intervention_rate": 0.8333,
+      "failed": 7,
+      "stopped": 0,
+      "judge_error": 0,
+      "judge_error_rate": 0.0,
+      "valid": true,
+      "tokens": 157507,
+      "calls": 118,
+      "cost_cny": 0.0,
+      "elapsed_s": 2378.82,
+      "run": {
+        "limit": 0,
+        "limit_base": 0,
+        "data_mode": "defects",
+        "n_defects": 120,
+        "n_base": 12,
+        "a2_temperature": 0.3,
+        "models": {
+          "generate": {
+            "provider": "ollama",
+            "model": "qwen3:8b",
+            "base_url": "http://127.0.0.1:11434/v1",
+            "api_key_env": "DEEPSEEK_API_KEY",
+            "temperature": 0.0,
+            "max_tokens": 2048,
+            "timeout_s": 300.0,
+            "json_mode": true,
+            "has_key": true,
+            "ollama": {
+              "found": true,
+              "api": "http://127.0.0.1:11434/api/tags",
+              "model": "qwen3:8b",
+              "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+              "size": 5225388164,
+              "modified_at": "2026-11-21T00:11:31.8121825+08:00",
+              "details": {
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "8.2B",
+                "quantization_level": "Q4_K_M",
+                "format": "gguf",
+                "parent_model": ""
+              }
+            }
+          },
+          "judge": null
+        },
+        "generated_at": "20261122T150819Z"
+      },
+      "fingerprint": {
+        "input": {
+          "base": {
+            "path": "agent/fixtures/public/base_v1.json",
+            "sha256": "e6fc7190525233788aecf84e6208eff9fddef2c45ba0b7f73af6789fe52f1cdb",
+            "n_total": 12
+          },
+          "defects": {
+            "path": "agent/fixtures/public/defects_v1.jsonl",
+            "sha256": "5ea8943f048ba443bf46095e3352747de2490b71e1d5fa0292f8bbea04790fa2",
+            "n_total": 120
+          }
+        },
+        "evaluator": {
+          "rules_version": "1.0.0",
+          "judge_prompt_version": "coherence-judge-v3",
+          "judge_model": "none",
+          "rubric_version": "3.0",
+          "judge_temperature": 0.0,
+          "rules_sha256": "d64dc8945e308ada26f3fed86286a4bc035e396c2788b1e965dd196b87ff9c72",
+          "judge_prompt_sha256": "d428c32dd4eb254232b2d193de380cd1ea05a189d880e4de30597e9c66fe306f",
+          "sha256": "bbf2d3077abaaab1abcd467bc816eff3cc0e89357634419af59293a6fa56cfe0"
+        }
+      }
+    },
     {
       "arm": "A3",
       "description": "规则策略 + 确定性工具",
@@ -62,14 +253,59 @@
       },
       "macro_recall_blocked": 0.8333,
       "macro_recall_detected": 0.8333,
+      "repaired": 0,
+      "repair_rate": 0.0,
       "clean_total": 12,
       "clean_flagged": 0,
-      "clean_fp_rate": 0.0,
+      "clean_failed": 0,
+      "clean_stopped": 0,
+      "clean_intervention_rate": 0.0,
       "failed": 0,
+      "stopped": 0,
+      "judge_error": 0,
+      "judge_error_rate": 0.0,
+      "valid": true,
       "tokens": 0,
       "calls": 0,
       "cost_cny": 0.0,
-      "elapsed_s": 0.03
+      "elapsed_s": 0.04,
+      "run": {
+        "limit": 0,
+        "limit_base": 0,
+        "data_mode": "defects",
+        "n_defects": 120,
+        "n_base": 12,
+        "a2_temperature": null,
+        "models": {
+          "generate": null,
+          "judge": null
+        },
+        "generated_at": "20261122T123653Z"
+      },
+      "fingerprint": {
+        "input": {
+          "base": {
+            "path": "agent/fixtures/public/base_v1.json",
+            "sha256": "e6fc7190525233788aecf84e6208eff9fddef2c45ba0b7f73af6789fe52f1cdb",
+            "n_total": 12
+          },
+          "defects": {
+            "path": "agent/fixtures/public/defects_v1.jsonl",
+            "sha256": "5ea8943f048ba443bf46095e3352747de2490b71e1d5fa0292f8bbea04790fa2",
+            "n_total": 120
+          }
+        },
+        "evaluator": {
+          "rules_version": "1.0.0",
+          "judge_prompt_version": "coherence-judge-v3",
+          "judge_model": "none",
+          "rubric_version": "3.0",
+          "judge_temperature": 0.0,
+          "rules_sha256": "d64dc8945e308ada26f3fed86286a4bc035e396c2788b1e965dd196b87ff9c72",
+          "judge_prompt_sha256": "d428c32dd4eb254232b2d193de380cd1ea05a189d880e4de30597e9c66fe306f",
+          "sha256": "bbf2d3077abaaab1abcd467bc816eff3cc0e89357634419af59293a6fa56cfe0"
+        }
+      }
     },
     {
       "arm": "A3L",
@@ -108,14 +344,208 @@
       },
       "macro_recall_blocked": 0.8333,
       "macro_recall_detected": 0.8333,
+      "repaired": 0,
+      "repair_rate": 0.0,
       "clean_total": 12,
       "clean_flagged": 0,
-      "clean_fp_rate": 0.0,
+      "clean_failed": 0,
+      "clean_stopped": 0,
+      "clean_intervention_rate": 0.0,
+      "failed": 2,
+      "stopped": 0,
+      "judge_error": 0,
+      "judge_error_rate": 0.0,
+      "valid": true,
+      "tokens": 233376,
+      "calls": 284,
+      "cost_cny": 0.0,
+      "elapsed_s": 2122.68,
+      "run": {
+        "limit": 0,
+        "limit_base": 0,
+        "data_mode": "defects",
+        "n_defects": 120,
+        "n_base": 12,
+        "a2_temperature": null,
+        "models": {
+          "generate": {
+            "provider": "ollama",
+            "model": "qwen3:8b",
+            "base_url": "http://127.0.0.1:11434/v1",
+            "api_key_env": "DEEPSEEK_API_KEY",
+            "temperature": 0.0,
+            "max_tokens": 2048,
+            "timeout_s": 300.0,
+            "json_mode": true,
+            "has_key": true,
+            "ollama": {
+              "found": true,
+              "api": "http://127.0.0.1:11434/api/tags",
+              "model": "qwen3:8b",
+              "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+              "size": 5225388164,
+              "modified_at": "2026-11-21T00:11:31.8121825+08:00",
+              "details": {
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "8.2B",
+                "quantization_level": "Q4_K_M",
+                "format": "gguf",
+                "parent_model": ""
+              }
+            }
+          },
+          "judge": null
+        },
+        "generated_at": "20261122T123920Z"
+      },
+      "fingerprint": {
+        "input": {
+          "base": {
+            "path": "agent/fixtures/public/base_v1.json",
+            "sha256": "e6fc7190525233788aecf84e6208eff9fddef2c45ba0b7f73af6789fe52f1cdb",
+            "n_total": 12
+          },
+          "defects": {
+            "path": "agent/fixtures/public/defects_v1.jsonl",
+            "sha256": "5ea8943f048ba443bf46095e3352747de2490b71e1d5fa0292f8bbea04790fa2",
+            "n_total": 120
+          }
+        },
+        "evaluator": {
+          "rules_version": "1.0.0",
+          "judge_prompt_version": "coherence-judge-v3",
+          "judge_model": "none",
+          "rubric_version": "3.0",
+          "judge_temperature": 0.0,
+          "rules_sha256": "d64dc8945e308ada26f3fed86286a4bc035e396c2788b1e965dd196b87ff9c72",
+          "judge_prompt_sha256": "d428c32dd4eb254232b2d193de380cd1ea05a189d880e4de30597e9c66fe306f",
+          "sha256": "bbf2d3077abaaab1abcd467bc816eff3cc0e89357634419af59293a6fa56cfe0"
+        }
+      }
+    },
+    {
+      "arm": "A3R",
+      "description": "规则多轮策略 + 确定性工具 + rewrite_segment",
+      "per_type": {
+        "D1_off_topic": {
+          "total": 20,
+          "detected": 0,
+          "blocked": 0
+        },
+        "D2_reference_broken": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 20
+        },
+        "D3_fact_conflict": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 20
+        },
+        "D4_role_confusion": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 6,
+          "repaired": 14
+        },
+        "D5_repetition": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 10,
+          "repaired": 10
+        },
+        "D6_missing_response": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 20
+        }
+      },
+      "macro_recall_blocked": 0.6333,
+      "macro_recall_detected": 0.8333,
+      "repaired": 24,
+      "repair_rate": 0.24,
+      "clean_total": 12,
+      "clean_flagged": 0,
+      "clean_failed": 0,
+      "clean_stopped": 0,
+      "clean_intervention_rate": 0.0,
       "failed": 0,
-      "tokens": 251561,
-      "calls": 346,
-      "cost_cny": 0.3986688,
-      "elapsed_s": 3141.89
+      "stopped": 0,
+      "judge_error": 0,
+      "judge_error_rate": 0.0,
+      "valid": true,
+      "tokens": 40729,
+      "calls": 54,
+      "cost_cny": 0.0,
+      "elapsed_s": 506.59,
+      "run": {
+        "limit": 0,
+        "limit_base": 0,
+        "data_mode": "defects",
+        "n_defects": 120,
+        "n_base": 12,
+        "a2_temperature": null,
+        "models": {
+          "generate": {
+            "provider": "ollama",
+            "model": "qwen3:8b",
+            "base_url": "http://127.0.0.1:11434/v1",
+            "api_key_env": "DEEPSEEK_API_KEY",
+            "temperature": 0.0,
+            "max_tokens": 2048,
+            "timeout_s": 300.0,
+            "json_mode": true,
+            "has_key": true,
+            "ollama": {
+              "found": true,
+              "api": "http://127.0.0.1:11434/api/tags",
+              "model": "qwen3:8b",
+              "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+              "size": 5225388164,
+              "modified_at": "2026-11-21T00:11:31.8121825+08:00",
+              "details": {
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "8.2B",
+                "quantization_level": "Q4_K_M",
+                "format": "gguf",
+                "parent_model": ""
+              }
+            }
+          },
+          "judge": null
+        },
+        "generated_at": "20261122T131444Z"
+      },
+      "fingerprint": {
+        "input": {
+          "base": {
+            "path": "agent/fixtures/public/base_v1.json",
+            "sha256": "e6fc7190525233788aecf84e6208eff9fddef2c45ba0b7f73af6789fe52f1cdb",
+            "n_total": 12
+          },
+          "defects": {
+            "path": "agent/fixtures/public/defects_v1.jsonl",
+            "sha256": "5ea8943f048ba443bf46095e3352747de2490b71e1d5fa0292f8bbea04790fa2",
+            "n_total": 120
+          }
+        },
+        "evaluator": {
+          "rules_version": "1.0.0",
+          "judge_prompt_version": "coherence-judge-v3",
+          "judge_model": "none",
+          "rubric_version": "3.0",
+          "judge_temperature": 0.0,
+          "rules_sha256": "d64dc8945e308ada26f3fed86286a4bc035e396c2788b1e965dd196b87ff9c72",
+          "judge_prompt_sha256": "d428c32dd4eb254232b2d193de380cd1ea05a189d880e4de30597e9c66fe306f",
+          "sha256": "bbf2d3077abaaab1abcd467bc816eff3cc0e89357634419af59293a6fa56cfe0"
+        }
+      }
     },
     {
       "arm": "A4",
@@ -123,8 +553,8 @@
       "per_type": {
         "D1_off_topic": {
           "total": 20,
-          "detected": 20,
-          "blocked": 20
+          "detected": 18,
+          "blocked": 18
         },
         "D2_reference_broken": {
           "total": 20,
@@ -152,29 +582,277 @@
           "blocked": 20
         }
       },
-      "macro_recall_blocked": 1.0,
-      "macro_recall_detected": 1.0,
+      "macro_recall_blocked": 0.9833,
+      "macro_recall_detected": 0.9833,
+      "repaired": 0,
+      "repair_rate": 0.0,
       "clean_total": 12,
       "clean_flagged": 0,
-      "clean_fp_rate": 0.0,
-      "failed": 0,
-      "tokens": 305910,
-      "calls": 423,
-      "cost_cny": 0.54950448,
-      "elapsed_s": 3324.28,
-      "stopped": 1,
-      "corrections": [
-        {
-          "field": "per_type.D5_repetition.blocked",
-          "from": 19,
-          "to": 20,
-          "reason": "评测期间宿主机进入 Modern Standby 39 分钟（22:49:06–23:28:27），恢复后该条被墙钟预算中止，属环境中断而非模型漏检",
-          "recheck": "ablation_recheck_A4_D5_repetition-001（detected 1/1, blocked 1/1）"
+      "clean_failed": 0,
+      "clean_stopped": 0,
+      "clean_intervention_rate": 0.0,
+      "failed": 2,
+      "stopped": 0,
+      "judge_error": 0,
+      "judge_error_rate": 0.0,
+      "valid": true,
+      "tokens": 273798,
+      "calls": 332,
+      "cost_cny": 0.0,
+      "elapsed_s": 2748.25,
+      "run": {
+        "limit": 0,
+        "limit_base": 0,
+        "data_mode": "defects",
+        "n_defects": 120,
+        "n_base": 12,
+        "a2_temperature": null,
+        "models": {
+          "generate": {
+            "provider": "ollama",
+            "model": "qwen3:8b",
+            "base_url": "http://127.0.0.1:11434/v1",
+            "api_key_env": "DEEPSEEK_API_KEY",
+            "temperature": 0.0,
+            "max_tokens": 2048,
+            "timeout_s": 300.0,
+            "json_mode": true,
+            "has_key": true,
+            "ollama": {
+              "found": true,
+              "api": "http://127.0.0.1:11434/api/tags",
+              "model": "qwen3:8b",
+              "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+              "size": 5225388164,
+              "modified_at": "2026-11-21T00:11:31.8121825+08:00",
+              "details": {
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "8.2B",
+                "quantization_level": "Q4_K_M",
+                "format": "gguf",
+                "parent_model": ""
+              }
+            }
+          },
+          "judge": {
+            "provider": "ollama",
+            "model": "qwen3:8b",
+            "base_url": "http://127.0.0.1:11434/v1",
+            "api_key_env": "DEEPSEEK_API_KEY",
+            "temperature": 0.0,
+            "max_tokens": 2048,
+            "timeout_s": 300.0,
+            "json_mode": true,
+            "has_key": true,
+            "ollama": {
+              "found": true,
+              "api": "http://127.0.0.1:11434/api/tags",
+              "model": "qwen3:8b",
+              "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+              "size": 5225388164,
+              "modified_at": "2026-11-21T00:11:31.8121825+08:00",
+              "details": {
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "8.2B",
+                "quantization_level": "Q4_K_M",
+                "format": "gguf",
+                "parent_model": ""
+              }
+            }
+          }
+        },
+        "generated_at": "20261122T132312Z"
+      },
+      "fingerprint": {
+        "input": {
+          "base": {
+            "path": "agent/fixtures/public/base_v1.json",
+            "sha256": "e6fc7190525233788aecf84e6208eff9fddef2c45ba0b7f73af6789fe52f1cdb",
+            "n_total": 12
+          },
+          "defects": {
+            "path": "agent/fixtures/public/defects_v1.jsonl",
+            "sha256": "5ea8943f048ba443bf46095e3352747de2490b71e1d5fa0292f8bbea04790fa2",
+            "n_total": 120
+          }
+        },
+        "evaluator": {
+          "rules_version": "1.0.0",
+          "judge_prompt_version": "coherence-judge-v3",
+          "judge_model": "qwen3:8b",
+          "rubric_version": "3.0",
+          "judge_temperature": 0.0,
+          "rules_sha256": "d64dc8945e308ada26f3fed86286a4bc035e396c2788b1e965dd196b87ff9c72",
+          "judge_prompt_sha256": "d428c32dd4eb254232b2d193de380cd1ea05a189d880e4de30597e9c66fe306f",
+          "sha256": "514fcb2f02e65729f82b859ba76717006b8f4b8fd86f83e42cf3e7eb0f34a11c"
         }
-      ]
+      }
+    },
+    {
+      "arm": "A4R",
+      "description": "LLM 决策 + 确定性工具 + 语义判官 + rewrite_segment",
+      "per_type": {
+        "D1_off_topic": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 6,
+          "repaired": 12
+        },
+        "D2_reference_broken": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 20
+        },
+        "D3_fact_conflict": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 20
+        },
+        "D4_role_confusion": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 20
+        },
+        "D5_repetition": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 15,
+          "repaired": 4
+        },
+        "D6_missing_response": {
+          "total": 20,
+          "detected": 20,
+          "blocked": 20
+        }
+      },
+      "macro_recall_blocked": 0.8417,
+      "macro_recall_detected": 1.0,
+      "repaired": 16,
+      "repair_rate": 0.1333,
+      "clean_total": 12,
+      "clean_flagged": 0,
+      "clean_failed": 0,
+      "clean_stopped": 0,
+      "clean_intervention_rate": 0.0,
+      "failed": 3,
+      "stopped": 0,
+      "judge_error": 0,
+      "judge_error_rate": 0.0,
+      "valid": true,
+      "tokens": 429264,
+      "calls": 468,
+      "cost_cny": 0.0,
+      "elapsed_s": 3552.72,
+      "run": {
+        "limit": 0,
+        "limit_base": 0,
+        "data_mode": "defects",
+        "n_defects": 120,
+        "n_base": 12,
+        "a2_temperature": null,
+        "models": {
+          "generate": {
+            "provider": "ollama",
+            "model": "qwen3:8b",
+            "base_url": "http://127.0.0.1:11434/v1",
+            "api_key_env": "DEEPSEEK_API_KEY",
+            "temperature": 0.0,
+            "max_tokens": 2048,
+            "timeout_s": 300.0,
+            "json_mode": true,
+            "has_key": true,
+            "ollama": {
+              "found": true,
+              "api": "http://127.0.0.1:11434/api/tags",
+              "model": "qwen3:8b",
+              "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+              "size": 5225388164,
+              "modified_at": "2026-11-21T00:11:31.8121825+08:00",
+              "details": {
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "8.2B",
+                "quantization_level": "Q4_K_M",
+                "format": "gguf",
+                "parent_model": ""
+              }
+            }
+          },
+          "judge": {
+            "provider": "ollama",
+            "model": "qwen3:8b",
+            "base_url": "http://127.0.0.1:11434/v1",
+            "api_key_env": "DEEPSEEK_API_KEY",
+            "temperature": 0.0,
+            "max_tokens": 2048,
+            "timeout_s": 300.0,
+            "json_mode": true,
+            "has_key": true,
+            "ollama": {
+              "found": true,
+              "api": "http://127.0.0.1:11434/api/tags",
+              "model": "qwen3:8b",
+              "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+              "size": 5225388164,
+              "modified_at": "2026-11-21T00:11:31.8121825+08:00",
+              "details": {
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "8.2B",
+                "quantization_level": "Q4_K_M",
+                "format": "gguf",
+                "parent_model": ""
+              }
+            }
+          }
+        },
+        "generated_at": "20261122T140903Z"
+      },
+      "fingerprint": {
+        "input": {
+          "base": {
+            "path": "agent/fixtures/public/base_v1.json",
+            "sha256": "e6fc7190525233788aecf84e6208eff9fddef2c45ba0b7f73af6789fe52f1cdb",
+            "n_total": 12
+          },
+          "defects": {
+            "path": "agent/fixtures/public/defects_v1.jsonl",
+            "sha256": "5ea8943f048ba443bf46095e3352747de2490b71e1d5fa0292f8bbea04790fa2",
+            "n_total": 120
+          }
+        },
+        "evaluator": {
+          "rules_version": "1.0.0",
+          "judge_prompt_version": "coherence-judge-v3",
+          "judge_model": "qwen3:8b",
+          "rubric_version": "3.0",
+          "judge_temperature": 0.0,
+          "rules_sha256": "d64dc8945e308ada26f3fed86286a4bc035e396c2788b1e965dd196b87ff9c72",
+          "judge_prompt_sha256": "d428c32dd4eb254232b2d193de380cd1ea05a189d880e4de30597e9c66fe306f",
+          "sha256": "514fcb2f02e65729f82b859ba76717006b8f4b8fd86f83e42cf3e7eb0f34a11c"
+        }
+      }
     }
   ],
   "recall": {
+    "A2": {
+      "D1_off_topic": 0.0,
+      "D2_reference_broken": 0.0,
+      "D3_fact_conflict": 0.0,
+      "D4_role_confusion": 0.0,
+      "D5_repetition": 0.0,
+      "D6_missing_response": 0.0
+    },
     "A3": {
       "D1_off_topic": 0.0,
       "D2_reference_broken": 1.0,
@@ -191,22 +869,40 @@
       "D5_repetition": 1.0,
       "D6_missing_response": 1.0
     },
+    "A3R": {
+      "D1_off_topic": 0.0,
+      "D2_reference_broken": 1.0,
+      "D3_fact_conflict": 1.0,
+      "D4_role_confusion": 0.3,
+      "D5_repetition": 0.5,
+      "D6_missing_response": 1.0
+    },
     "A4": {
-      "D1_off_topic": 1.0,
+      "D1_off_topic": 0.9,
       "D2_reference_broken": 1.0,
       "D3_fact_conflict": 1.0,
       "D4_role_confusion": 1.0,
       "D5_repetition": 1.0,
       "D6_missing_response": 1.0
+    },
+    "A4R": {
+      "D1_off_topic": 0.3,
+      "D2_reference_broken": 1.0,
+      "D3_fact_conflict": 1.0,
+      "D4_role_confusion": 1.0,
+      "D5_repetition": 0.75,
+      "D6_missing_response": 1.0
     }
   },
   "conclusions": [
-    "A3 → A3L：宏观阻断率不变（83.3%），成本变化 ¥0.40 —— 该层因子在这套工具集上没有带来增量。",
-    "A3L → A4：宏观阻断率 83.3% → 100.0%（+16.7pp），成本变化 ¥0.15。",
-    "语义判官带来的增量集中在：D1 答非所问 +100pp。",
-    "A3 干净样本误报 0/12（0.0%）。",
-    "A3L 干净样本误报 0/12（0.0%）。",
-    "A4 干净样本误报 0/12（0.0%）。",
-    "A4 有 1 条样本因预算/墙钟中止，已与「未检出」分开计数（环境噪声不计入模型能力）。"
+    "A3 → A3L：宏观阻断率不变（变化 <0.5pp，83.3%），成本变化 ¥0.00 —— 该层因子在这套工具集上没有带来增量。",
+    "A3L → A4：宏观阻断率 83.3% → 98.3%（+15.0pp），成本变化 ¥0.00。",
+    "语义判官带来的增量集中在：D1 答非所问 +90pp。",
+    "A2 干净样本干预 10/12（83.3%）。",
+    "A3 干净样本干预 0/12（0.0%）。",
+    "A3L 干净样本干预 0/12（0.0%）。",
+    "A3R 干净样本干预 0/12（0.0%）。",
+    "A4 干净样本干预 0/12（0.0%）。",
+    "A4R 干净样本干预 0/12（0.0%）。"
   ]
 }

@@ -56,11 +56,11 @@
 
         <div class="stats" aria-label="关键结果">
           <div class="stat">
-            <div class="stat-value">353</div>
-            <div class="stat-label">开源切片测试通过（5 skipped）</div>
+            <div class="stat-value">479</div>
+            <div class="stat-label">开源切片测试通过（1 skipped）</div>
           </div>
           <div class="stat">
-            <div class="stat-value">100%</div>
+            <div class="stat-value">98.3%</div>
             <div class="stat-label">宏观阻断率（A4，120 条程序化缺陷）</div>
           </div>
           <div class="stat">
@@ -117,9 +117,9 @@
               <dt>我的角色</dt>
               <dd>独立设计并实现运行时、工具、评测与开源切片。</dd>
               <dt>关键手段</dt>
-              <dd>决策循环、6 类缺陷、5 条保真约束、四元组基线指纹、成本账本。</dd>
+              <dd>决策循环、6 类缺陷、5 条保真约束、四元组基线指纹、模型溯源与成本账本。</dd>
               <dt>证据</dt>
-              <dd>120 条缺陷 + 12 条干净样本；A3/A3L/A4 消融；353 tests passed。</dd>
+              <dd>120 条缺陷 + 12 条干净样本；六个对照臂；479 tests passed。</dd>
             </dl>
             <span class="card-more">查看评测与 Trace →</span>
           </a>
@@ -171,18 +171,21 @@
         </div>
         <div class="evidence">
           <div><b>120 + 12</b>6 类缺陷 × 20，加 12 条干净样本</div>
-          <div><b>3 arms</b>A3 规则 / A3L LLM 决策 / A4 语义判官</div>
+          <div><b>6 arms</b>A2 / A3 / A3L / A3R / A4 / A4R</div>
           <div><b>4-tuple</b>输入 / 配置 / 评估器 / 适配指纹</div>
-          <div><b>¥0.55</b>A4 跑完 132 条的总成本</div>
+          <div><b>¥1.06*</b>A4 跑完 132 条的参考成本（本地实际 ¥0）</div>
         </div>
 
         <div class="callout warn">
           <span class="callout-title">项目说明</span>
           <p>
-            Agent 项目由我独立设计并持续完善，当前已完成<strong>语义检测与原文回退</strong>，局部改写仍在完善。
+            Agent 项目由我独立设计并持续完善，当前已完成<strong>语义检测、原文回退与受限改写</strong>，
+            改写必须通过保真与连贯性复检，修复率仍偏低。
           </p>
           <p>
             评测基于我构建的<strong>程序化缺陷样本</strong>，结果用于比较不同策略，不直接外推到真实生产场景。
+            本轮在本地 Ollama <code>qwen3:8b</code> 上运行，实际支出 ¥0；带 * 的金额是按 DeepSeek
+            高峰价折算的参考成本。
           </p>
           <p>
             对于涉及公司业务的项目，我仅展示本人负责的架构与设计取舍，不公开业务数据、对话原文或客户信息。

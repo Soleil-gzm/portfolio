@@ -56,7 +56,7 @@
 
       <div class="stats" aria-label="关键结果">
         <div class="stat">
-          <div class="stat-value">100%</div>
+          <div class="stat-value">98.3%</div>
           <div class="stat-label">A4 宏观阻断率（120 条缺陷）</div>
         </div>
         <div class="stat">
@@ -64,16 +64,18 @@
           <div class="stat-label">干净样本误报</div>
         </div>
         <div class="stat">
-          <div class="stat-value">353</div>
-          <div class="stat-label">开源切片测试通过（5 skipped）</div>
+          <div class="stat-value">479</div>
+          <div class="stat-label">开源切片测试通过（1 skipped）</div>
         </div>
       </div>
 
       <div class="callout warn">
         <span class="callout-title">先读边界</span>
-        当前版本做<strong>跨轮对话检测 + 回退</strong>，不做对话改写；对话改写工具只留了接口。
-        评测数据是<strong>程序化合成缺陷</strong>（中立域：订单售后回访），不是真实生产缺陷。
-        所有数字都是在 120 条缺陷 + 12 条干净样本上的单次运行结果。
+        当前版本做<strong>跨轮检测、原文回退与受限改写</strong>：改写必须通过保真与连贯性复检，
+        未通过仍回退原文。评测数据是<strong>程序化合成缺陷</strong>（中立域：订单售后回访），
+        不是真实生产缺陷；所有数字都是 120 条缺陷 + 12 条干净样本上的单次运行结果。
+        本轮在本地 Ollama <code>qwen3:8b</code> 上运行，现金支出为 ¥0；
+        页面中的 ¥ 是按 DeepSeek 高峰价折算的<strong>参考成本</strong>，不代表真实账单。
       </div>
 
       <h2>问题与约束</h2>
@@ -96,7 +98,8 @@
           append-only 账本记录输入、输出、缓存 token、价格表版本和折算成本。</li>
       </ul>
       <p>
-        当前版本先实现检测、回退、可复现评测与成本计量，为后续局部改写建立质量门禁。
+        当前版本已接入检测、回退、受限改写与可复现评测；改写只在通过复检后替换原文，
+        因此修复率仍偏低，<code>repaired</code> 样本需要人工抽检后才能当作真修复引用。
       </p>
 
       <h2>架构</h2>
@@ -108,7 +111,7 @@
       <p>
         循环里模型只负责选择工具，工具参数由运行时注入；工具返回结果决定下一步，
         直到命中终止工具或预算触顶。所有决策写入 Trace，所有 token 写入 append-only 账本，
-        成本按版本化价格表计算。
+        实际成本与参考成本分开记录。
       </p>
 
       <h2>关键决策</h2>
@@ -143,27 +146,32 @@
         </article>
 
         <article class="decision">
-          <h3>把“没检出”和“被环境打断”分开</h3>
+          <h3>本地推理与参考成本分开报</h3>
           <p>
-            A4 首轮 D5 是 19/20：评测期间宿主机进入 Modern Standby 39 分钟，
-            恢复后该条被墙钟预算中止。复核单条为 blocked。评测器现在把这类中止计入独立的 <code>stopped</code> 字段，避免将环境故障误判为模型漏检。
+            本轮生成与判官都在本地 Ollama <code>qwen3:8b</code> 上运行，现金支出为 ¥0。
+            为了能和 API 方案比较，我保留账本里的输入 / 缓存 / 输出 token，
+            再按 DeepSeek 高峰价（输入 ¥2/M、缓存命中 ¥0.04/M、输出 ¥8/M）折算
+            <strong>参考成本</strong>。页面与图表中的 ¥ 都标明是参考值，不冒充真实账单。
           </p>
         </article>
       </div>
 
       <h2>评测设计</h2>
       <p>
-        缺陷集包含 6 类各 20 条，加 12 条干净样本。三个臂按单变量原则设计：
-        A3 规则决策；A3L 换成 LLM function calling，工具不变；A4 在 A3L 基础上加语义判官。
+        缺陷集包含 6 类各 20 条，加 12 条干净样本。六个臂按单变量原则逐层加因子：
+        A2 只做单次 LLM 重写，用来隔离“工具循环”本身的净收益；A3 用规则决策 + 确定性工具；
+        A3L 只把决策者换成 LLM function calling；A3R 给规则策略补上 <code>rewrite_segment</code>；
+        A4 在 A3L 上加语义判官；A4R 是 LLM 决策拿到完整工具集后的上限。
       </p>
       <div class="figure">
         <table>
-          <caption class="small muted" style="text-align:left;padding-bottom:.5rem">A4 首轮因宿主待机导致 D5 为 19/20，复核后修正为
-            20/20；原始值保留在 <code>ablation_A4.raw.json</code>。</caption>
+          <caption class="small muted" style="text-align:left;padding-bottom:.5rem">同一缺陷集上的单次运行；A2 的 blocked 恒为 0（无回退能力），
+            其“误报”列表示干净样本被改写的比例。</caption>
           <thead>
             <tr>
               <th>臂</th>
               <th>决策</th>
+              <th>工具</th>
               <th>D1</th>
               <th>D2</th>
               <th>D3</th>
@@ -173,13 +181,29 @@
               <th>误报</th>
               <th>macro</th>
               <th>tokens</th>
-              <th>成本</th>
+              <th>参考成本</th>
             </tr>
           </thead>
           <tbody>
             <tr>
+              <td>A2</td>
+              <td>单次重写</td>
+              <td>无</td>
+              <td>0/20</td>
+              <td>0/20</td>
+              <td>0/20</td>
+              <td>0/20</td>
+              <td>0/20</td>
+              <td>0/20</td>
+              <td>10/12</td>
+              <td>0.0%</td>
+              <td>157,507</td>
+              <td>¥0.93*</td>
+            </tr>
+            <tr>
               <td>A3</td>
               <td>规则</td>
+              <td>确定性</td>
               <td>0/20</td>
               <td>20/20</td>
               <td>20/20</td>
@@ -194,6 +218,7 @@
             <tr>
               <td>A3L</td>
               <td>LLM</td>
+              <td>确定性</td>
               <td>0/20</td>
               <td>20/20</td>
               <td>20/20</td>
@@ -202,34 +227,67 @@
               <td>20/20</td>
               <td>0/12</td>
               <td>83.3%</td>
-              <td>251,561</td>
-              <td>¥0.40</td>
+              <td>233,376</td>
+              <td>¥0.87*</td>
+            </tr>
+            <tr>
+              <td>A3R</td>
+              <td>规则</td>
+              <td>确定性 + rewrite</td>
+              <td>0/20</td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>6/20</td>
+              <td>10/20</td>
+              <td>20/20</td>
+              <td>0/12</td>
+              <td>63.3%</td>
+              <td>40,729</td>
+              <td>¥0.21*</td>
             </tr>
             <tr>
               <td>A4</td>
-              <td>LLM + 判官</td>
-              <td><strong>20/20</strong></td>
+              <td>LLM</td>
+              <td>确定性 + 判官</td>
+              <td><strong>18/20</strong></td>
               <td>20/20</td>
               <td>20/20</td>
               <td>20/20</td>
               <td>20/20</td>
               <td>20/20</td>
               <td>0/12</td>
-              <td><strong>100%</strong></td>
-              <td>305,910</td>
-              <td>¥0.55</td>
+              <td><strong>98.3%</strong></td>
+              <td>273,798</td>
+              <td>¥1.06*</td>
+            </tr>
+            <tr>
+              <td>A4R</td>
+              <td>LLM</td>
+              <td>全工具集</td>
+              <td>6/20</td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>20/20</td>
+              <td>15/20</td>
+              <td>20/20</td>
+              <td>0/12</td>
+              <td>84.2%</td>
+              <td>429,264</td>
+              <td>¥1.42*</td>
             </tr>
           </tbody>
         </table>
       </div>
       <p class="small muted">
         D1 答非所问 · D2 指代断裂 · D3 事实冲突 · D4 角色混淆 · D5 重复空转 · D6 缺失承接。
-        成本按 append-only token 账本与版本化价格表计算。
+        * 参考成本：本地实际支出 ¥0；按 DeepSeek 高峰价（输入 ¥2/M、缓存命中 ¥0.04/M、输出 ¥8/M）
+        对 append-only 账本全部调用（含判官与重试）折算。tokens 列只统计决策调用，
+        因此不能直接用 tokens × 单价复算。
       </p>
 
       <figure class="figure">
-        <img src="../../assets/img/01_ablation.svg" alt="三个评测臂的宏观阻断率与成本对比柱状图" loading="lazy">
-        <figcaption>A3 与 A3L 宏观阻断率相同，A4 增加语义判官后达到 100%。</figcaption>
+        <img src="../../assets/img/01_ablation.svg" alt="六个评测臂的宏观阻断率与参考成本对比柱状图" loading="lazy">
+        <figcaption>A3 → A3L 无增量；A4 加语义判官后 D1 覆盖 18/20；A3R / A4R 的 blocked 下降来自“修复替代回退”。</figcaption>
       </figure>
 
       <h2>结果解读</h2>
@@ -237,29 +295,38 @@
         <li>
           <strong>决策策略消融（A3 → A3L）：检测指标不变，资源消耗增加。</strong>
           两臂使用相同的确定性工具，仅将 <code>RulePolicy</code> 替换为 <code>LLMPolicy</code>。
-          宏观阻断率均为 83.3%；A3L 新增 346 次模型调用、251,561 tokens 和 ¥0.3987 成本。
-          在当前工具集和评测集上，仅替换决策策略未带来可观测的检测增量。
+          宏观阻断率均为 83.3%；A3L 新增 284 次决策调用、233,376 tokens，
+          按 DeepSeek 价格折算参考成本 ¥0.87。在当前工具集和评测集上，
+          仅替换决策策略未带来可观测的检测增量。
         </li>
         <li>
-          <strong>评估器能力消融（A3L → A4）：语义判官覆盖 D1 答非所问。</strong>
+          <strong>评估器能力消融（A3L → A4）：语义判官是唯一能覆盖 D1 的层。</strong>
           A4 保持 LLM 决策策略不变，仅向 <code>check_coherence</code> 注入语义判官。
-          D1 阻断数从 0/20 提升至 20/20，宏观阻断率从 83.3% 提升至 100%，增量成本为 ¥0.15。
-          D1 注入仅替换单轮 assistant 的 content，R1–R5 和确定性 C1/C2 规则无法识别
-          跨话题语义；A4 通过 <code>C3_off_topic</code> 记录违规并触发回退。
+          D1 阻断数从 0/20 提升至 18/20，宏观阻断率从 83.3% 提升至 98.3%（+15.0pp），
+          参考成本增加 ¥0.19。D1 注入仅替换单轮 assistant 的 content，
+          R1–R5 和确定性 C1/C2 规则无法识别跨话题语义；A4 通过 <code>C3_off_topic</code>
+          记录违规并触发回退，但仍有 2 条漏判。
+        </li>
+        <li>
+          <strong>修复工具改变的是“回退 vs 修复”的分配，不是线性提升 blocked。</strong>
+          A3 → A3R 后，24 条缺陷从回退变为修复（D4 14 条、D5 10 条），
+          但 blocked 从 83.3% 降到 63.3%。A4R 检出率 100%，却只修复 16 条
+          （修复率 13.3%，D4 仍全部回退）。完整工具集不等于更高修复率；
+          <code>repaired</code> 只代表“改写后通过校验”，必须人工抽检后才能当作真修复。
         </li>
         <li>
           <strong>质量、异常与成本分别统计。</strong>
-          <code>detected</code> 表示循环结束后存在违规记录，<code>blocked</code> 表示最终状态为
-          <code>fallback</code>；干净样本的 blocked 计为误报，<code>stopped</code> 和
-          <code>failed</code> 独立计数。三个臂的干净样本误报均为 0/12。
-          A4 在 132 条样本上记录 423 次调用、305,910 tokens 和 ¥0.5495 成本，
-          按样本量折合约 ¥0.0042/条。
+          <code>detected</code> 表示循环期间出现过违规记录，<code>blocked</code> 表示最终状态为
+          <code>fallback</code>；干净样本被回退或被改写都计为干预。
+          A3L / A4 / A4R 分别有 2 / 2 / 3 条样本运行时 <code>failed</code>，已独立计数；
+          六个臂的判官故障均为 0，结果均标记为 <code>valid</code>。
+          除 A2（10/12）外，其余五个臂的干净样本干预均为 0/12。
         </li>
       </ol>
 
       <figure class="figure">
-        <img src="../../assets/img/02_heatmap.svg" alt="六类缺陷在三个评测臂上的拦截热力图" loading="lazy">
-        <figcaption>语义判官的增量集中在 D1；其余五类由确定性规则覆盖。</figcaption>
+        <img src="../../assets/img/02_heatmap.svg" alt="六类缺陷在六个评测臂上的阻断热力图" loading="lazy">
+        <figcaption>语义判官的增量集中在 D1；其余五类主要由确定性规则覆盖。</figcaption>
       </figure>
 
       <h2>失败案例：为什么必须看语义</h2>
@@ -269,7 +336,7 @@
       </p>
       <pre><code>user      : 已经等很久了，麻烦帮我催一下。（订单号 ORD-556516）
 assistant : 请在十五分钟内完成支付，否则订单会自动关闭。</code></pre>
-      <p>Agent 的决策链（A4，live）如下：</p>
+      <p>以下 Trace 来自历史 DeepSeek 运行，仅用于示意决策链；本轮指标来自本地 <code>qwen3:8b</code>。</p>
       <div class="figure">
         <table>
           <thead>
@@ -315,14 +382,17 @@ assistant : 请在十五分钟内完成支付，否则订单会自动关闭。</
 
       <h2>局限与下一步</h2>
       <ul>
-        <li><strong>只做检测与回退。</strong>对话改写工具只留接口，还未真正实现。</li>
+        <li><strong>修复率仍低。</strong>改写已接入且强制复检，但 A4R 修复率只有 13.3%，
+          <code>repaired</code> 样本尚未人工抽检，不能当作语义正确的证明。</li>
         <li><strong>合成缺陷。</strong>6 类缺陷是程序化注入，不是真实生产分布。</li>
-        <li><strong>单模型、单次运行、小样本。</strong>只测了 <code>deepseek-flash</code>，没有多模型对比与置信区间。</li>
-        <li><strong>计时不可用。</strong>评测期间发生宿主待机，耗时数据被污染，因此不作为指标。</li>
+        <li><strong>单模型、单次运行、小样本。</strong>生成与判官均为本地 <code>qwen3:8b</code>，
+          没有多模型对比与置信区间，也未跑跨臂显著性检验。</li>
+        <li><strong>判官校准存在过拟合风险。</strong>判官 v3 用公开轨 D1 做过开发集校准，
+          虽然干净样本误报为 0/12，仍需在未参与调参的样本上复核。</li>
         <li><strong>缺下游收益。</strong>尚未验证修复后的数据能否提升下游模型。</li>
       </ul>
       <p>
-        下一步按价值排序：完成改写工具与修复指标 → 在自然对话底座上做半合成缺陷与人工盲评
+        下一步按价值排序：提升改写修复率并做人工盲评 → 在自然对话底座上做半合成缺陷
         → 用同一训练配置验证下游收益。
       </p>
 
@@ -330,11 +400,11 @@ assistant : 请在十五分钟内完成支付，否则订单会自动关闭。</
       <p>
         该 Agent 由我独立设计并实现：运行时（决策循环、工具注册表、预算、Trace、checkpoint、
         token 账本）、评测（硬约束、实体抽取、连贯性、语义判官）、基准（四元组指纹、不可变锁、
-        缺陷注入、三臂对照、报告生成）以及开源清单与边界测试。
+        缺陷注入、六臂对照、模型溯源、报告生成）以及开源清单与边界测试。
       </p>
       <p>
         开源切片按 <code>oss_manifest.txt</code> 导出，发布文件不含业务标识，
-        公开代码不依赖上游工程；独立目录实测 353 passed / 5 skipped。
+        公开代码不依赖上游工程；独立目录实测 479 passed / 1 skipped。
       </p>
       <p>
         源码仓库：<a
@@ -350,8 +420,17 @@ python -m agent.benchmark.run \
   --input agent/fixtures/public/base_v1.json \
   --arms A0 --verify-arm A0
 
-# 离线评测 A3；A3L / A4 需要 DEEPSEEK_API_KEY，会消耗 token
-python -m agent.benchmark.agent_eval --arm A3 --out agent/benchmark/output/ablation_A3.json
+# 本地 Ollama 复现（生成与判官同一模型）
+$env:DEEPSEEK_API_KEY="ollama"
+$env:DEEPSEEK_BASE_URL="http://127.0.0.1:11434/v1"
+$env:DEEPSEEK_MODEL="qwen3:8b"
+$env:JUDGE_MODEL="qwen3:8b"
+$env:JUDGE_BASE_URL="http://127.0.0.1:11434/v1"
+$env:LLM_PRICE_TABLE="local"
+
+python -m agent.benchmark.agent_eval --arm A3 --out logs/.../ablation_A3.json
+python -m agent.benchmark.agent_eval --arm A4 --live --out logs/.../ablation_A4.json
+python -m agent.benchmark.report --results logs/... --out logs/.../report
 
 python -m pytest</code></pre>
       <p class="small muted">
