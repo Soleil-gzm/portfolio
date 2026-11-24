@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>LLM Agent · 对话数据质量 | Portfolio</title>
-  <meta name="description" content="LLM Agent 工程作品集：可控多轮对话生成、训练数据清洗与增强、可复现评测的对话修复 Agent。">
+  <title>LLM Agent · Runtime &amp; Evaluation | Portfolio</title>
+  <meta name="description" content="LLM Agent 工程作品集：ReAct 决策循环与 Planning&amp;Executor、工具契约与预算护栏、FastAPI + Docker 服务化、Ollama RAG，以及六臂单变量消融评测。">
   <meta name="theme-color" content="#f7f5f0">
   <link rel="stylesheet" href="assets/css/site.css">
   <script src="assets/js/site.js" defer></script>
@@ -16,7 +16,7 @@
     <div class="wrap-wide">
       <a class="brand" href="index.html">
         <span class="brand-mark" aria-hidden="true">GZ</span>
-        <span>LLM Agent · Data Quality</span>
+        <span>LLM Agent · Runtime &amp; Evaluation</span>
       </a>
       <nav class="site-nav" aria-label="主导航">
         <a href="index.html" aria-current="page">首页</a>
@@ -31,9 +31,9 @@
   <main id="main">
     <section class="hero">
       <div class="wrap">
-        <p class="eyebrow">LLM Agent · Dialogue Data Quality</p>
+        <p class="eyebrow">LLM Agent · Runtime &amp; Evaluation</p>
         <h1>Dialogue Repair Agent</h1>
-        <p class="hero-subtitle">语义连贯性检测 · 局部改写 · 可复现评测</p>
+        <p class="hero-subtitle">ReAct 决策循环 · 工具契约 · 服务化与可评测</p>
         <div class="lede">
           <p>
             在数据生产阶段，我负责可控多轮对话生成引擎的架构设计与主要实现，
@@ -47,16 +47,16 @@
           <p>
             我在前两个项目中发现，规则流程能够处理结构和实体问题，却难以覆盖模块切换处的
             答非所问与衔接生硬；全量调用 LLM 改写又会增加成本，并引入内容保真风险。
-            因此，我独立设计并实现对话质量 Agent，设计目标是先检测需要处理的轮次，
-            再对问题局部进行受约束的改写，并保留原文回退路径。同时，我为 Agent 建立
-            对照评测与成本记录，用于比较不同策略的检测效果和调用开销。
-            当前已完成检测与回退，局部改写仍在完善。
+            因此，我把它做成一个带工具契约的 Agent 运行时：模型在 ReAct 循环里只选择工具，
+            参数由运行时注入；默认逐轮检查，长对话可切到 Planning&amp;Executor 先选候选轮再精查。
+            运行时提供四维预算、Trace、checkpoint 与 cassette 回放，并已通过 FastAPI 与
+            Docker Compose 服务化；评测用六臂单变量消融，证明每个设计选择的净收益。
           </p>
         </div>
 
         <div class="stats" aria-label="关键结果">
           <div class="stat">
-            <div class="stat-value">547</div>
+            <div class="stat-value">577</div>
             <div class="stat-label">开源切片测试通过（1 skipped）</div>
           </div>
           <div class="stat">
@@ -108,18 +108,18 @@
         <div class="cards">
           <a class="card" href="cases/agent/index.html">
             <div class="card-top">
-              <h3>对话数据修复 Agent</h3>
-              <span class="card-tag live">可复现</span>
+              <h3>工具调用型对话修复 Agent</h3>
+              <span class="card-tag live">Agent 运行时</span>
             </div>
             <dl>
               <dt>问题</dt>
               <dd>模板拼接对话局部通顺、全局不连贯；直接 LLM 重写会改坏且无法证明。</dd>
               <dt>我的角色</dt>
-              <dd>独立设计并实现运行时、工具、评测与开源切片。</dd>
+              <dd>独立设计并实现运行时、执行模式、检索增强、服务化与评测。</dd>
               <dt>关键手段</dt>
-              <dd>决策循环、6 类缺陷、5 条保真约束、四元组基线指纹、私有分布校准公开轨、cassette 回放与断点续跑、模型溯源与成本账本。</dd>
+              <dd>ReAct 决策循环、Planning&amp;Executor、工具契约与四维预算、Trace / checkpoint / cassette 回放、FastAPI + Docker Compose、Ollama RAG、六臂单变量消融。</dd>
               <dt>证据</dt>
-              <dd>120 条缺陷 + 12 条干净样本；六个对照臂；547 tests passed。</dd>
+              <dd>120 条缺陷 + 12 条干净样本；A4 宏观阻断 98.3% 且干净样本误报 0/12；577 tests passed。</dd>
             </dl>
             <span class="card-more">查看评测与 Trace →</span>
           </a>
@@ -172,15 +172,16 @@
         <div class="evidence">
           <div><b>120 + 12</b>6 类缺陷 × 20，加 12 条干净样本</div>
           <div><b>6 arms</b>A2 / A3 / A3L / A3R / A4 / A4R</div>
-          <div><b>4-tuple</b>输入 / 配置 / 评估器 / 适配指纹</div>
+          <div><b>4 tools · 2 modes</b>工具契约 + ReAct / Planning&amp;Executor</div>
           <div><b>¥1.06*</b>A4 跑完 132 条的参考成本（本地实际 ¥0）</div>
         </div>
 
         <div class="callout warn">
           <span class="callout-title">项目说明</span>
           <p>
-            Agent 项目由我独立设计并持续完善，当前已完成<strong>语义检测、原文回退与受限改写</strong>，
-            改写必须通过保真与连贯性复检，修复率仍偏低。
+            Agent 项目由我独立设计并持续完善，当前已完成<strong>ReAct 决策循环、Planning&amp;Executor、
+            工具契约与预算护栏、FastAPI + Docker 服务化、Ollama 检索增强</strong>，以及六臂单变量消融。
+            改写必须通过保真与连贯性复检，未通过则回退原文，修复率仍偏低。
           </p>
           <p>
             评测基于我构建的<strong>程序化缺陷样本</strong>，结果用于比较不同策略，不直接外推到真实生产场景。

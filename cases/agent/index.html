@@ -4,8 +4,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>对话数据修复 Agent | Portfolio</title>
-  <meta name="description" content="可插拔的对话质量 Agent：6 类缺陷检测、保真约束、语义判官、六臂消融、四元组基线指纹、模型溯源与成本账本。">
+  <title>工具调用型对话修复 Agent | Portfolio</title>
+  <meta name="description" content="一个带工具契约、预算护栏、Trace 与回放的对话修复 Agent：ReAct 决策循环、Planning&amp;Executor、FastAPI 服务化、Docker 部署、RAG 检索增强，以及六臂单变量消融。">
   <meta name="theme-color" content="#f7f5f0">
   <link rel="stylesheet" href="../../assets/css/site.css">
   <script src="../../assets/js/site.js" defer></script>
@@ -18,7 +18,7 @@
     <div class="wrap-wide">
       <a class="brand" href="../../index.html">
         <span class="brand-mark" aria-hidden="true">GZ</span>
-        <span>LLM Agent · Data Quality</span>
+        <span>LLM Agent · Runtime &amp; Evaluation</span>
       </a>
       <nav class="site-nav" aria-label="主导航">
         <a href="../../index.html">首页</a>
@@ -35,22 +35,24 @@
       <nav class="breadcrumb" aria-label="面包屑">
         <a href="../../index.html">首页</a>
         <span aria-hidden="true">/</span>
-        <span>对话数据修复 Agent</span>
+        <span>工具调用型对话修复 Agent</span>
       </nav>
 
       <header class="case-hero">
-        <p class="eyebrow">Case 01 · Agent</p>
-        <h1>对话数据修复 Agent</h1>
+        <p class="eyebrow">Case 01 · Agent Runtime</p>
+        <h1>工具调用型对话修复 Agent</h1>
         <p class="lede">
-          这是一个可插拔的对话质量组件：检测跨轮断裂，优先保住原文，
-          并用可复现的对照臂、Trace 与成本账本证明每一步决策。
+          它不是把 prompt 套个循环，而是一个有工具契约、预算护栏、Trace 与回放能力的
+          Agent 运行时：模型只负责在 ReAct 循环里选工具，参数由运行时注入；
+          每个设计选择都要在单变量消融里证明净收益，否则回退原文。
         </p>
         <div class="case-meta">
-          <span>Open source slice</span>
-          <span>Apache-2.0</span>
+          <span>ReAct</span>
+          <span>Planning&amp;Executor</span>
+          <span>FastAPI</span>
+          <span>Docker Compose</span>
+          <span>Ollama · RAG</span>
           <span>Python ≥ 3.10</span>
-          <span>Synthetic data</span>
-          <span>Stage: detect + fallback</span>
         </div>
       </header>
 
@@ -64,160 +66,250 @@
           <div class="stat-label">干净样本误报</div>
         </div>
         <div class="stat">
-          <div class="stat-value">547</div>
+          <div class="stat-value">577</div>
           <div class="stat-label">开源切片测试通过（1 skipped）</div>
         </div>
       </div>
 
       <div class="callout warn">
         <span class="callout-title">先读边界</span>
-        当前版本做<strong>跨轮检测、原文回退与受限改写</strong>：改写必须通过保真与连贯性复检，
-        未通过仍回退原文。评测数据是<strong>程序化合成缺陷</strong>（中立域：订单售后回访），
-        不是真实生产缺陷；所有数字都是 120 条缺陷 + 12 条干净样本上的单次运行结果。
-        本轮在本地 Ollama <code>qwen3:8b</code> 上运行，现金支出为 ¥0；
-        页面中的 ¥ 是按 DeepSeek 高峰价折算的<strong>参考成本</strong>，不代表真实账单。
+        这是一个<strong>垂直场景的工具调用 Agent</strong>，不是通用编码 Agent：工具全部是纯函数，
+        不执行 shell、不读写文件，这是为了让每个工具能脱离 LLM 单测，代价是 Agent 不触达外部世界。
+        评测数据是<strong>程序化合成缺陷</strong>（中立域：订单售后回访），不是真实生产缺陷；
+        所有数字都是 120 条缺陷 + 12 条干净样本上的单次运行结果。本轮生成与判官在本地
+        Ollama <code>qwen3:8b</code> 上运行，现金支出 ¥0；页面中的 ¥ 是按 DeepSeek 高峰价折算的
+        <strong>参考成本</strong>。RAG 与 Planning 已接入真实执行链路，但<strong>尚未做“有/无”消融</strong>，
+        因此不宣称它们带来指标提升。
       </div>
 
-      <h2>问题与约束</h2>
+      <h2>它解决什么问题</h2>
       <p>
-        模板拼接生成的对话通常“局部通顺、全局不连贯”，尤其是模块或场景切换处，
-        衔接可能生硬，甚至不符合真实对话逻辑。合成数据按上万条批次生成，
-        如果对每条对话都调用 LLM 检测并改写，会产生大量不必要的 API 开销。
-        因此，设计目标是先定位高风险轮次，再按需进行局部改写。实现上分为三类约束：
+        模板拼接生成的对话“局部通顺、全局不连贯”，模块或场景切换处容易出现答非所问、
+        指代断裂、角色混淆等问题。如果对每条对话都调用 LLM 检测并改写，成本高，而且无法证明
+        改写没有破坏金额、编号、日期等关键内容。因此 Agent 的设计目标不是“生成更好的话术”，
+        而是<strong>在可解释、可回退、可度量的约束下，决定哪些轮次该处理、怎么处理</strong>。
       </p>
-      <ul>
-        <li><strong>保真校验（R1–R5）</strong>：<code>check_consistency</code> 比较改写前后的对话，
-          校验 system 逐字一致，消息数、role 与 loss 不变，实体集合不增不减、说话人分布一致，
-          并检查 assistant 是否异常复读 user 内容；违规以 <code>rule / turn / detail</code> 结构化返回。</li>
-        <li><strong>连贯性检查与回退（C0–C3）</strong>：<code>check_coherence</code> 检查相邻
-          assistant 轮次重复、空回复或过短回复，并可注入语义判官识别答非所问。
-          决策策略收到违规后调用 <code>fallback_keep</code> 返回原文；判官异常记为
-          <code>C0_judge_error</code>，不按校验通过处理。</li>
-        <li><strong>运行预算与成本计量</strong>：每次迭代检查迭代次数、工具调用数、token
-          和墙钟时间上限，并识别重复工具调用。决策与判官消耗的 token 均计入预算；
-          append-only 账本记录输入、输出、缓存 token、价格表版本和折算成本。</li>
-      </ul>
       <p>
-        当前版本已接入检测、回退、受限改写与可复现评测；改写只在通过复检后替换原文，
-        因此修复率仍偏低，<code>repaired</code> 样本需要人工抽检后才能当作真修复引用。
+        这决定了它的形态：一个<strong>决策循环 + 工具契约 + 可观测性</strong>的运行时，
+        而不是一次性的 prompt 调用。也正因为如此，本项目的主体工作量在运行时与评测基础设施上，
+        对话数据只是它要处理的对象。
       </p>
 
-      <h2>架构</h2>
+      <h2>运行时架构</h2>
       <figure class="figure">
         <img src="../../assets/img/agent-architecture.svg"
           alt="受损对话经适配器进入决策循环，循环调用一致性、连贯性与回退工具，输出原文或候选，并记录 Trace 与 token 账本；基线锁由四元组指纹构成。" loading="lazy">
         <figcaption>运行时由决策循环、工具层、可观测性与基线锁四部分组成。</figcaption>
       </figure>
       <p>
-        循环里模型只负责选择工具，工具参数由运行时注入；工具返回结果决定下一步，
-        直到命中终止工具或预算触顶。所有决策写入 Trace，所有 token 写入 append-only 账本，
-        实际成本与参考成本分开记录。
-      </p>
-
-      <h2>关键决策</h2>
-      <div class="decisions">
-        <article class="decision">
-          <h3>使用四个指纹固定基线用作对照组</h3>
-          <p>
-            基线由输入、配置、评估器、适配四个指纹组成，用来固定数据和评估口径。
-            <code>baseline_lock.json</code> 一经生成不可静默覆盖；变更必须
-            <code>--force --reason</code>，并写入 <code>lock_changelog.md</code>。
-            这样，更换数据或评估器后的结果不会被当作同一基线的复现。
-          </p>
-        </article>
-
-        <article class="decision">
-          <h3>模型只选工具名，参数由运行时注入</h3>
-          <p>
-            面对批量合成数据，全量调用 LLM 检测并改写会放大 API 成本，因此设计目标是
-            先定位模块或场景切换处的问题轮次，再按需局部改写。当前 LLM 在决策循环中只选择工具，参数由运行时注入，不直接生成或抄写对话文本，以减少输出 token，
-            并降低金额、编号、日期等字段被自由改写的风险。
-          </p>
-        </article>
-
-        <article class="decision">
-          <h3>未通过质量门禁，默认回退原文</h3>
-          <p>
-            不接受静默放行：任一硬约束报错就 <code>fallback_keep</code> 回退原文；
-            判官不可用记为 <code>C0_judge_error</code> 并同样回退。后续接入局部改写后，
-            LLM 候选也必须通过保真与连贯性检查，未通过就不替换原文；预算触顶则终止并标记
-            <code>stopped</code>，不输出未经验证的候选。
-          </p>
-        </article>
-
-        <article class="decision">
-          <h3>本地推理与参考成本分开报</h3>
-          <p>
-            本轮生成与判官都在本地 Ollama <code>qwen3:8b</code> 上运行，现金支出为 ¥0。
-            为了能和 API 方案比较，我保留账本里的输入 / 缓存 / 输出 token，
-            再按 DeepSeek <code>deepseek-flash</code> 2026-11 高峰价
-            （输入 ¥2/M、缓存命中 ¥0.04/M、输出 ¥8/M）折算
-            <strong>参考成本</strong>。页面与图表中的 ¥ 都标明是参考值，不冒充真实账单。
-          </p>
-        </article>
-      </div>
-
-      <h2>数据分布校准</h2>
-      <p>
-        最初的公开轨只有 3–7 轮、system 约 142 字，适合冻结基线，但不代表真实多轮数据。
-        我从私有轨 1000 条对话中只提取聚合分布：轮次直方图、去数字后的角色唯一率、
-        对话内重复率、消息长度分位与实体密度；再用中立域话术重新生成公开数据，
-        <strong>不复制原文、业务标签或客户信息</strong>。
+        循环遵循 ReAct 的 <strong>Thought → Action → Observation</strong> 结构：
+        <code>policy.decide</code> 产出思考与工具名（Thought），<code>registry.invoke</code> 执行工具（Action），
+        工具结果回写状态（Observation），直到命中终止工具或预算触顶。
+        Trace 里的 <code>decide</code> 与 <code>tool_result</code> 事件可以还原成完整的 step 序列，
+        便于调试与展示。
       </p>
       <div class="figure">
         <table>
-          <caption class="small muted" style="text-align:left;padding-bottom:.5rem">realistic 档 1000 条校准跑；
-            v1 仍是默认冻结基线，二者产物分开。</caption>
           <thead>
             <tr>
-              <th>指标</th>
-              <th>v1 base</th>
-              <th>realistic</th>
-              <th>私有轨聚合</th>
+              <th>ReAct 环节</th>
+              <th>本项目实现</th>
+              <th>落点</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>轮次中位 / 均值</td>
-              <td>4 / 4.67</td>
-              <td>11 / 10.85</td>
-              <td>11 / 10.85</td>
+              <td>Thought</td>
+              <td><code>policy.decide</code> 返回 <code>reason</code></td>
+              <td><code>agent/runtime/policy.py</code></td>
             </tr>
             <tr>
-              <td>assistant / user 唯一率</td>
-              <td>10.7% / 21.4%</td>
-              <td>49.3% / 28.3%</td>
-              <td>49.5% / 28.5%</td>
+              <td>Action</td>
+              <td>模型只输出工具名，参数由运行时注入</td>
+              <td><code>agent/runtime/loop.py</code></td>
             </tr>
             <tr>
-              <td>对话内 assistant 重复</td>
-              <td>8.3%</td>
-              <td>2.9%</td>
-              <td>3.3%</td>
+              <td>Observation</td>
+              <td>工具结果更新 state，写入 Trace</td>
+              <td><code>agent/runtime/trace.py</code></td>
             </tr>
             <tr>
-              <td>system 长度</td>
-              <td>142</td>
-              <td>363–365</td>
-              <td>348–375</td>
+              <td>Stop / Budget</td>
+              <td>终止工具，或迭代 / 调用 / token / 墙钟任一触顶</td>
+              <td><code>agent/runtime/budget.py</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>两种执行模式</h2>
+      <p>
+        默认模式是逐轮 ReAct；当对话较长、或已知某些轮次是业务伪影时，可以切到
+        Planning&amp;Executor：先规划候选轮，再只对候选轮做精细检查。
+      </p>
+      <div class="figure">
+        <table>
+          <thead>
+            <tr>
+              <th>模式</th>
+              <th>规划</th>
+              <th>执行</th>
+              <th>适用</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ReAct（默认）</td>
+              <td>无独立规划，逐步决策</td>
+              <td>对全部 assistant 轮执行工具循环</td>
+              <td>短对话、需要完整覆盖</td>
             </tr>
             <tr>
-              <td>消息数范围</td>
-              <td>7–15</td>
-              <td>3–53</td>
-              <td>3–53</td>
+              <td>Planning&amp;Executor</td>
+              <td><code>plan()</code> 产出候选轮</td>
+              <td>非候选轮交给判官忽略，只检查候选轮</td>
+              <td>长对话、已知伪影轮、控制预算</td>
             </tr>
           </tbody>
         </table>
       </div>
       <p class="small muted">
-        校准参数与生成器分别在 <code>agent/benchmark/profiles.py</code> 和
-        <code>agent/benchmark/realistic.py</code>；门禁由
-        <code>agent/tests/test_fixture_profile.py</code> 固化。
-        realistic 档只用于生成公开 fixture，不改变已冻结的 A0 基线指纹。
+        规划不是装饰：候选集会换算成判官的忽略集，<code>execute()</code> 通过
+        <code>runtime_factory(frozenset)</code> 把它注入 <code>LLMJudge</code>，
+        因此“规划”真正改变了检查范围。排除轮由调用方显式传入，架构层不硬编码任何轮次。
       </p>
 
-      <h2>评测设计</h2>
+      <h2>工具层与安全约束</h2>
+      <p>
+        工具是可替换的纯函数，注册表按臂装配；决策者只选工具名，不直接改写对话文本，
+        从而减少输出 token，也降低关键字段被自由改写的风险。
+      </p>
+      <div class="figure">
+        <table>
+          <thead>
+            <tr>
+              <th>工具</th>
+              <th>类型</th>
+              <th>作用</th>
+              <th>失败语义</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>check_consistency</code></td>
+              <td>确定性</td>
+              <td>R1–R5 保真校验：system 逐字、结构、实体、说话人分布</td>
+              <td>结构化返回违规，不抛异常</td>
+            </tr>
+            <tr>
+              <td><code>check_coherence</code></td>
+              <td>确定性 + 可选判官</td>
+              <td>C0–C3 连贯性检查；注入判官后识别答非所问</td>
+              <td>判官异常记 <code>C0_judge_error</code>，不放行</td>
+            </tr>
+            <tr>
+              <td><code>fallback_keep</code></td>
+              <td>确定性</td>
+              <td>终止并回退原文</td>
+              <td>保底路径</td>
+            </tr>
+            <tr>
+              <td><code>rewrite_segment</code></td>
+              <td>LLM</td>
+              <td>受限局部改写；改写后必须复检；可注入检索上下文</td>
+              <td>复检不通过则回退原文</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        安全约束分三层：<strong>保真</strong>（实体集合不增不减、结构与 role 不变）、
+        <strong>回退</strong>（任一硬约束报错就返回原文，判官不可用同样回退）、
+        <strong>预算</strong>（迭代 / 工具调用 / token / 墙钟四维上限，重复调用识别，触顶标记
+        <code>stopped</code>，不输出未经验证的候选）。
+      </p>
+
+      <h2>服务化与部署</h2>
+      <p>
+        运行时可以脱离评测脚本独立运行：FastAPI 暴露三个端点，Docker Compose 一键起
+        API 与 Ollama，模型名通过环境变量注入，不在镜像或编排文件里写死。
+      </p>
+      <div class="figure">
+        <table>
+          <thead>
+            <tr>
+              <th>端点</th>
+              <th>用途</th>
+              <th>关键参数</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>GET /health</code></td>
+              <td>版本、支持的臂、LLM 端点可达性</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code>GET /api/v1/arms</code></td>
+              <td>六个消融臂及说明</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code>POST /api/v1/repair</code></td>
+              <td>对单条对话执行决策循环</td>
+              <td><code>arm</code>、<code>ignore_turns</code>、<code>planning</code>、<code>rag</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        容器方面：多阶段构建把依赖安装与运行时分离；Compose 用
+        <code>depends_on.condition: service_healthy</code> 等 Ollama 健康后再起 API，
+        用命名卷持久化模型，用 <code>.dockerignore</code> 排除私有 fixture。
+        另外提供 TypeScript SDK（<code>RepairAgent</code> 类，完整类型定义，基于
+        <code>fetch</code> 与 <code>AbortSignal.timeout</code>），供非 Python 调用方接入。
+      </p>
+
+      <h2>检索增强（RAG）</h2>
+      <p>
+        改写阶段可以接入检索：把历史上相似的“问题回复 → 修复后回复”作为参考拼进 prompt。
+        实现不依赖 Chroma / Milvus，而是用 Ollama 原生 embedding 接口加 numpy 余弦检索，
+        避免为演示引入重量级依赖。
+      </p>
+      <div class="figure">
+        <table>
+          <thead>
+            <tr>
+              <th>组件</th>
+              <th>实现</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>向量化</td>
+              <td><code>OllamaEmbedder</code>，走 <code>/api/embeddings</code>（<code>bge-m3</code>，1024 维）</td>
+            </tr>
+            <tr>
+              <td>存储</td>
+              <td><code>VectorStore</code>：<code>vectors.npy</code> + <code>metadata.jsonl</code>，余弦 top-k，支持元数据过滤</td>
+            </tr>
+            <tr>
+              <td>接入</td>
+              <td><code>RAGAugmenter</code> 渲染参考案例，注入 <code>rewrite_segment</code> 的 prompt</td>
+            </tr>
+            <tr>
+              <td>降级</td>
+              <td>检索异常时静默降级为无增强，不阻断改写；结果用 <code>rag_used</code> 标记</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">
+        边界：已在端到端测试中验证“检索内容确实进入 prompt”和“检索故障可降级”，
+        但尚未跑“有 / 无 RAG”的对照臂，因此不把 RAG 写成指标提升的来源。
+      </p>
+
+      <h2>评测：单变量归因</h2>
       <p>
         缺陷集包含 6 类各 20 条，加 12 条干净样本。六个臂按单变量原则逐层加因子：
         A2 只做单次 LLM 重写，用来隔离“工具循环”本身的净收益；A3 用规则决策 + 确定性工具；
@@ -391,6 +483,26 @@
         <figcaption>语义判官的增量集中在 D1；其余五类主要由确定性规则覆盖。</figcaption>
       </figure>
 
+      <h2>真实数据外部有效性：先修测量，再谈指标</h2>
+      <p>
+        在私有轨 200 条真实对话上复核时，判官几乎把所有样本的第 2 轮都判成“答非所问”。
+        排查后发现这不是模型缺陷：<strong>这批数据的首条 user 是业务侧随机采样的开场句</strong>，
+        与后续对话并不构成真实轮次关系，判官按“开场对不连贯”如实报了违规。
+      </p>
+      <p>
+        处理分两步。第一步做数据规范化：把首条 user 内容替换为占位符，保持消息条数与下标不变，
+        使缺陷注入仍能对齐。第二步才暴露真正的 Agent 侧问题——判官在“占位符 + 固定开场白”
+        的稳定模式下会漏判第 4 轮，导致 <code>judge_error_rate</code> 达到 8.33%。
+        修复方式是把 <code>ignore_turns</code> 从“事后过滤违规”升级为<strong>契约层排除</strong>：
+        判官仍对全部轮次输出结论，但被忽略的轮次不计入 expected pairs，
+        也不参与违约统计。修复后故障率降到 0.34%，结果重新 <code>valid</code>。
+      </p>
+      <p class="small muted">
+        这一步的价值不在数字，而在方法：<strong>评测基础设施本身会产生伪影</strong>，
+        在相信任何“指标下降”之前，必须先证明测量本身是干净的。
+        这也是我把评测和运行时放在同一个项目里的原因。
+      </p>
+
       <h2>失败案例：为什么必须看语义</h2>
       <p>
         下面是公开轨中的一个 D1 案例。注入缺陷时只把第 2 轮回复换成跨话题内容，
@@ -444,30 +556,37 @@ assistant : 请在十五分钟内完成支付，否则订单会自动关闭。</
 
       <h2>局限与下一步</h2>
       <ul>
-        <li><strong>修复率仍低。</strong>改写已接入且强制复检，但 A4R 修复率只有 13.3%，
-          <code>repaired</code> 样本尚未人工抽检，不能当作语义正确的证明。</li>
-        <li><strong>合成缺陷。</strong>6 类缺陷是程序化注入；公开轨的轮次、重复率、长度与
-          实体密度已用私有轨聚合分布校准，但话术仍是合成的，不是真实生产文本。</li>
-        <li><strong>单模型、单次运行、小样本。</strong>生成与判官均为本地 <code>qwen3:8b</code>，
-          没有多模型对比与置信区间，也未跑跨臂显著性检验。</li>
-        <li><strong>判官校准存在过拟合风险。</strong>判官 v3 用公开轨 D1 做过开发集校准，
-          虽然干净样本误报为 0/12，仍需在未参与调参的样本上复核。</li>
-        <li><strong>缺下游收益。</strong>尚未验证修复后的数据能否提升下游模型。</li>
+        <li><strong>工具不触达外部世界。</strong>四个工具都是纯函数，没有沙箱内的文件读取、
+          命令执行或网页访问；这是为可单测做的取舍，也是与通用编码 Agent 最大的能力差距。</li>
+        <li><strong>缺上下文管理。</strong>长对话全量进入 prompt，没有裁剪、摘要或记忆机制；
+          <code>planning</code> 目前只收窄检查范围，不做语义级的多步规划。</li>
+        <li><strong>缺人机协作与流式。</strong>没有中断审批（HITL）、没有流式输出、没有 MCP 接入。</li>
+        <li><strong>RAG 与 Planning 未基准化。</strong>两者已接入真实链路并有端到端测试，
+          但还没有“有 / 无”对照臂，不能宣称带来检测或修复提升。</li>
+        <li><strong>修复率仍低。</strong>A4R 修复率 13.3%，<code>repaired</code> 样本尚未人工抽检，
+          不能当作语义正确的证明。</li>
+        <li><strong>单模型、单次运行、小样本。</strong>没有多模型对比与置信区间，
+          也未跑跨臂显著性检验；判官 v3 用公开轨做过开发集校准，仍需未参与调参的样本复核。</li>
+        <li><strong>TypeScript SDK 未在本机编译验证。</strong>类型与构建配置齐全，
+          但本机未安装 Node，<code>tsc</code> 验证待补。</li>
       </ul>
       <p>
-        下一步按价值排序：提升改写修复率并做人工盲评 → 在自然对话底座上做半合成缺陷
-        → 用同一训练配置验证下游收益。
+        下一步按价值排序：给工具组补一个受沙箱约束的真实工具（只读 artifact / 跑测试）→
+        加长对话的上下文裁剪并用同一评测集验证 → 做 RAG 与 Planning 的对照臂 →
+        提升改写修复率并做人工盲评。
       </p>
 
       <h2>我的工作与复现</h2>
       <p>
-        该 Agent 由我独立设计并实现：运行时（决策循环、工具注册表、预算、Trace、checkpoint、
-        cassette 录制回放、token 账本）、评测（硬约束、实体抽取、连贯性、语义判官）、基准（四元组指纹、不可变锁、
-        缺陷注入、六臂对照、模型溯源、报告生成）以及开源清单与边界测试。
+        该 Agent 由我独立设计并实现：运行时（ReAct 决策循环、工具注册表、预算、Trace、checkpoint、
+        cassette 录制回放、token 账本）、执行模式（Planning&amp;Executor 与判官忽略集契约）、
+        检索增强（Ollama embedding + 向量检索 + 改写注入 + 降级）、服务化（FastAPI 三端点、
+        多阶段镜像、Compose 编排、TypeScript SDK）、评测（硬约束、实体抽取、连贯性、语义判官、
+        六臂对照、基线锁）以及开源清单与边界测试。
       </p>
       <p>
         开源切片按 <code>oss_manifest.txt</code> 导出，发布文件不含业务标识，
-        公开代码不依赖上游工程；独立目录实测 547 passed / 1 skipped。
+        公开代码不依赖上游工程；独立目录实测 577 passed / 1 skipped。
       </p>
       <p>
         源码仓库：<a
@@ -478,25 +597,24 @@ assistant : 请在十五分钟内完成支付，否则订单会自动关闭。</
 # 同 seed 生成同数据（默认 v1 冻结基线）
 python -m agent.benchmark.fixtures --n 12 --seed 20261112
 
-# 分布校准档：只匹配私有轨聚合形状，不复制原文
-python -m agent.benchmark.fixtures --profile realistic
-
 # 离线复现 A0 基线指纹
 python -m agent.benchmark.run \
   --input agent/fixtures/public/base_v1.json \
   --arms A0 --verify-arm A0
 
-# 本地 Ollama 复现（生成与判官同一模型）
-$env:DEEPSEEK_API_KEY="ollama"
-$env:DEEPSEEK_BASE_URL="http://127.0.0.1:11434/v1"
-$env:DEEPSEEK_MODEL="qwen3:8b"
-$env:JUDGE_MODEL="qwen3:8b"
-$env:JUDGE_BASE_URL="http://127.0.0.1:11434/v1"
-$env:LLM_PRICE_TABLE="local"
+# 本地 Ollama 复现（模型名按本机实际设置）
+export DEEPSEEK_API_KEY="ollama"
+export DEEPSEEK_BASE_URL="http://127.0.0.1:11434/v1"
+export DEEPSEEK_MODEL="qwen3:8b"
+export JUDGE_MODEL="qwen3:8b"
+export LLM_PRICE_TABLE="local"
 
 python -m agent.benchmark.agent_eval --arm A3 --out logs/.../ablation_A3.json
 python -m agent.benchmark.agent_eval --arm A4 --live --out logs/.../ablation_A4.json
-python -m agent.benchmark.report --results logs/... --out logs/.../report
+
+# 服务化（本地或容器）
+python -m agent.api --port 8000
+docker compose up -d --build
 
 python -m pytest</code></pre>
       <p class="small muted">
@@ -529,4 +647,5 @@ python -m pytest</code></pre>
     </div>
   </footer>
 </body>
+
 </html>

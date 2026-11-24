@@ -1,14 +1,14 @@
 {
-  "verified_at": "2026-11-23",
+  "verified_at": "2026-11-24",
   "note": "所有页面数字必须能追溯到本文件 sources 中的路径或核验命令；修改数字时先改这里。",
   "agent": {
-    "display_name": "对话数据修复 Agent",
-    "stage": "检测 + 回退 + 受限改写",
+    "display_name": "工具调用型对话修复 Agent",
+    "stage": "ReAct 运行时 + Planning&Executor + 服务化（检测 / 回退 / 受限改写）",
     "license": "Apache-2.0",
     "public_files": 76,
     "root_files": 7,
     "excluded_files": 15,
-    "tests_passed": 547,
+    "tests_passed": 577,
     "tests_skipped": 1,
     "defects_total": 120,
     "defect_types": 6,
